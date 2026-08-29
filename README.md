@@ -149,6 +149,19 @@ A black but connected stream can simply be an empty headless workspace. Launch
 an application on `WAYLAND_DISPLAY=wayland-0` to distinguish that from a video
 failure. Encoder logs should report frames with zero `dropped` and `failed`.
 
+The connection drawer reports browser cadence, dropped frames, and freezes. A
+periodic RTT spike on Wi-Fi can come from NetworkManager power saving. Disable
+it for the active connection when low-latency streaming is the priority:
+
+```bash
+WIFI_CONNECTION="$(nmcli -g GENERAL.CONNECTION device show wlan0)"
+sudo nmcli connection modify "$WIFI_CONNECTION" 802-11-wireless.powersave 2
+sudo nmcli connection up "$WIFI_CONNECTION" ifname wlan0
+```
+
+Bringing the connection up briefly interrupts Wi-Fi. The setting is stored in
+that NetworkManager connection profile.
+
 ## Development and deployment
 
 Git is the source of truth. Do not copy individual files into `/opt`, `/usr`,
