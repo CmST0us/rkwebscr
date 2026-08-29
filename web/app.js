@@ -242,7 +242,7 @@ function startFrameSmoother() {
   const video = elements.video;
   if (!video.videoWidth || !video.requestVideoFrameCallback || typeof createImageBitmap !== "function") return;
 
-  const state = { active: true, capture: 0, render: 0, sequence: 0, next: 0, frames: [], ready: new Map(), last: null };
+  const state = { active: true, capture: 0, render: 0, sequence: 0, next: 0, frames: [], ready: new Map(), last: null, held: false };
   frameSmoother = state;
   elements.canvas.width = video.videoWidth;
   elements.canvas.height = video.videoHeight;
@@ -282,11 +282,16 @@ function startFrameSmoother() {
     let tick = 0;
     const render = () => {
       if (!state.active) return;
-      if ((tick++ % divisor) === 0 && state.frames.length) {
-        state.last?.close();
-        state.last = state.frames.shift();
-        context.drawImage(state.last, 0, 0);
-        elements.viewport.classList.add("is-smoothed");
+      if ((tick++ % divisor) === 0) {
+        if (state.frames.length && (state.held || state.frames.length > 2)) {
+          state.last?.close();
+          state.last = state.frames.shift();
+          context.drawImage(state.last, 0, 0);
+          elements.viewport.classList.add("is-smoothed");
+          state.held = false;
+        } else {
+          state.held = true;
+        }
       }
       state.render = requestAnimationFrame(render);
     };
