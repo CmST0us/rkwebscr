@@ -2,8 +2,6 @@
 
 ## 0.3.2 - 2026-08-29
 
-- Align the virtual display and PipeWire capture ceiling with the 60 FPS MPP
-  and WebRTC stream.
 - Keep standard GNOME animations enabled in the headless desktop.
 
 ## 0.3.1 - 2026-08-29
