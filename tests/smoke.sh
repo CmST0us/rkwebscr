@@ -22,6 +22,9 @@ if grep -q 'disable-animations' server/rkwebscrd.py; then
 fi
 grep -q '/usr/bin/rkwebscrd' systemd/rkwebscr.service
 grep -q 'RTCPeerConnection' web/app.js
+grep -q 'totalSquaredInterFrameDelay' web/app.js
+grep -q '>Cadence<' web/index.html
+grep -q '>Dropped<' web/index.html
 grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.service
 grep -q 'GNOME_SHELL_SESSION_MODE=ubuntu' systemd/rkwebscr-headless.service
 grep -q 'XDG_CURRENT_DESKTOP=ubuntu:GNOME' systemd/rkwebscr.service

@@ -334,8 +334,16 @@ async function updateMetrics() {
       const fps = (video.framesDecoded - lastStats.framesDecoded) / seconds;
       const frames = video.framesDecoded - lastStats.framesDecoded;
       const decode = frames > 0 ? ((video.totalDecodeTime - lastStats.totalDecodeTime) / frames) * 1000 : 0;
+      const intervalTotal = (video.totalInterFrameDelay || 0) - lastStats.totalInterFrameDelay;
+      const intervalSquared = (video.totalSquaredInterFrameDelay || 0) - lastStats.totalSquaredInterFrameDelay;
+      const intervalMean = frames > 0 ? intervalTotal / frames : 0;
+      const intervalDeviation = frames > 0 ? Math.sqrt(Math.max(0, intervalSquared / frames - intervalMean ** 2)) : 0;
+      const dropped = Math.max(0, (video.framesDropped || 0) - lastStats.framesDropped);
+      const freezes = Math.max(0, (video.freezeCount || 0) - lastStats.freezeCount);
       elements.bitrate.textContent = `${mbps.toFixed(1)} Mbps`;
       elements.fps.textContent = `${Math.round(fps)} FPS`;
+      elements.captureLatency.textContent = frames > 0 ? `${(intervalMean * 1000).toFixed(1)} ± ${(intervalDeviation * 1000).toFixed(1)} ms` : "—";
+      elements.encodeLatency.textContent = `${dropped} / ${freezes} freeze`;
       elements.decodeLatency.textContent = decode ? `${decode.toFixed(1)} ms` : "—";
     }
     lastStats = {
@@ -343,6 +351,10 @@ async function updateMetrics() {
       bytesReceived: video.bytesReceived,
       framesDecoded: video.framesDecoded,
       totalDecodeTime: video.totalDecodeTime,
+      totalInterFrameDelay: video.totalInterFrameDelay || 0,
+      totalSquaredInterFrameDelay: video.totalSquaredInterFrameDelay || 0,
+      framesDropped: video.framesDropped || 0,
+      freezeCount: video.freezeCount || 0,
     };
   }
   if (pair?.currentRoundTripTime != null) {
