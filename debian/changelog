@@ -2,7 +2,7 @@ rkwebscr (0.3.6) unstable; urgency=medium
 
   * Carry WebRTC media over ADB-forwarded ICE-TCP when accessed on localhost.
   * Keep LAN clients on the normal ICE transport.
-  * Hold RK3588 CPU, GPU, and memory clocks for steady 60 FPS rendering.
+  * Pin tested RK3588 clocks below the unstable all-domain maximum.
 
  -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 17:55:00 +0800
 

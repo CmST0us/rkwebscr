@@ -4,7 +4,8 @@
 
 - Carry WebRTC media over ADB-forwarded ICE-TCP when the page is opened on
   localhost, while preserving normal LAN WebRTC behavior.
-- Keep RK3588 CPU, GPU, and memory clocks stable for smooth 60 FPS rendering.
+- Pin tested RK3588 clocks below the unstable all-domain maximum for smooth
+  60 FPS rendering.
 
 ## 0.3.5 - 2026-08-29
 

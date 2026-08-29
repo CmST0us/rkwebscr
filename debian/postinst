@@ -11,6 +11,7 @@ if [ "$1" = configure ]; then
     systemctl daemon-reload || true
     systemctl restart avahi-daemon.service || true
     systemctl enable --now rkwebscr-http.socket >/dev/null 2>&1 || true
+    systemctl enable --now rkwebscr-performance.service >/dev/null 2>&1 || true
   fi
 fi
 

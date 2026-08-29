@@ -1,0 +1,15 @@
+[Unit]
+Description=RK3588 frame-pacing clocks for rkwebscr
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=RKWEBSCR_CPU_LITTLE_HZ=1800000
+Environment=RKWEBSCR_CPU_BIG_HZ=2304000
+Environment=RKWEBSCR_GPU_HZ=900000000
+Environment=RKWEBSCR_DMC_HZ=2112000000
+ExecStart=/bin/sh -ec 'for f in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do printf userspace > "$f"; done; printf %s "$RKWEBSCR_CPU_LITTLE_HZ" > /sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed; for p in 4 6; do printf %s "$RKWEBSCR_CPU_BIG_HZ" > "/sys/devices/system/cpu/cpufreq/policy$p/scaling_setspeed"; done; printf userspace > /sys/class/devfreq/fb000000.gpu/governor; printf %s "$RKWEBSCR_GPU_HZ" > /sys/class/devfreq/fb000000.gpu/userspace/set_freq; printf userspace > /sys/class/devfreq/dmc/governor; printf %s "$RKWEBSCR_DMC_HZ" > /sys/class/devfreq/dmc/userspace/set_freq'
+ExecStop=/bin/sh -ec 'for f in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do printf ondemand > "$f"; done; printf simple_ondemand > /sys/class/devfreq/fb000000.gpu/governor; printf dmc_ondemand > /sys/class/devfreq/dmc/governor'
+
+[Install]
+WantedBy=multi-user.target
