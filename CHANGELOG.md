@@ -6,6 +6,7 @@
   localhost, while preserving normal LAN WebRTC behavior.
 - Pin tested RK3588 clocks below the unstable all-domain maximum for smooth
   60 FPS rendering.
+- Calibrate the ROCK 5B virtual monitor to 66 Hz for steady 60 FPS output.
 - Align browser presentation to the local display refresh with a bounded
   `ImageBitmap` frame buffer, avoiding clustered frame-time stalls.
 - Coalesce high-rate pointer motion on a continuous frame-rate clock so input

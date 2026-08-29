@@ -141,7 +141,7 @@ blocks its Clipboard API.
 The packaged defaults are 1280x720, 60 FPS, 6 Mbps CBR, and one-second GOP.
 Override the service with `systemctl --user edit rkwebscr.service` when another
 resolution or bitrate is needed. `RKWEBSCR_CAPTURE_FPS` is the display-clock
-calibration knob; the ROCK 5B default is 64 to produce approximately 60 output
+calibration knob; the ROCK 5B default is 66 to produce approximately 60 output
 frames per second. Mutter emits frames only when pixels change, with this value
 as its refresh-rate ceiling.
 
