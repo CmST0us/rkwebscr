@@ -140,6 +140,11 @@ calibration knob; the ROCK 5B default is 64 to produce approximately 60 output
 frames per second. Mutter emits frames only when pixels change, with this value
 as its refresh-rate ceiling.
 
+The package enables `rkwebscr-performance.service` to keep the RK3588 CPU, GPU,
+and memory clocks from changing mid-frame. Disable it with
+`sudo systemctl disable --now rkwebscr-performance.service` when power use is
+more important than a steady 60 FPS.
+
 Useful commands:
 
 ```bash
