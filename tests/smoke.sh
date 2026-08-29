@@ -17,7 +17,7 @@ grep -q '/usr/bin/rkwebscrd' systemd/rkwebscr.service
 grep -q 'RTCPeerConnection' web/app.js
 grep -q -- '--headless --wayland' systemd/rkwebscr-headless.service
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.1.2)' debian/changelog
+grep -q '^rkwebscr (0.2.0)' debian/changelog
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
@@ -29,6 +29,11 @@ if grep -R -E -q 'Authorization|token-file|load_token' server web scripts; then
   exit 1
 fi
 grep -q 'rockchip-mpp-dev' debian/control
+grep -q 'wl-clipboard' debian/control
+grep -q 'clipboard-set' server/rkwebscrd.py
+grep -q 'wl-copy' server/rkwebscrd.py
+grep -q 'clipboardDialog' web/app.js
+grep -q 'clipboardDialog' web/index.html
 test -f LICENSE
 test -f CHANGELOG.md
 test -f CONTRIBUTING.md

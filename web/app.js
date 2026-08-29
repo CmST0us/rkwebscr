@@ -20,6 +20,12 @@ const elements = {
   fit: $("#fitButton"),
   audio: $("#audioButton"),
   keyboard: $("#keyboardButton"),
+  clipboard: $("#clipboardButton"),
+  clipboardDialog: $("#clipboardDialog"),
+  clipboardText: $("#clipboardText"),
+  clipboardStatus: $("#clipboardStatus"),
+  clipboardPull: $("#clipboardPullButton"),
+  clipboardPush: $("#clipboardPushButton"),
   disconnect: $("#disconnectButton"),
   hint: $("#controlHint"),
   captureLatency: $("#captureLatency"),
@@ -49,6 +55,7 @@ const EVDEV = {
   Delete: 111, MetaLeft: 125, MetaRight: 126, ContextMenu: 127,
 };
 const BUTTONS = { 0: 272, 1: 274, 2: 273, 3: 275, 4: 276 };
+const MAX_CLIPBOARD_BYTES = 256 * 1024;
 
 let status = null;
 let peer = null;
@@ -127,7 +134,64 @@ function attachControl(channel) {
     elements.overlay.classList.add("is-hidden");
     elements.viewport.focus();
   };
+  control.onmessage = handleControlMessage;
   control.onclose = () => { control = null; };
+}
+
+async function handleControlMessage(event) {
+  let message;
+  try {
+    message = JSON.parse(event.data);
+  } catch {
+    return;
+  }
+  if (message.t === "clipboard-set-result") {
+    elements.clipboardStatus.textContent = message.ok ? "已发送到远端剪切板" : `发送失败：${message.error || "未知错误"}`;
+    return;
+  }
+  if (message.t !== "clipboard-data") return;
+  if (!message.ok) {
+    elements.clipboardStatus.textContent = `读取失败：${message.error || "未知错误"}`;
+    return;
+  }
+  elements.clipboardText.value = message.text;
+  try {
+    await navigator.clipboard.writeText(message.text);
+    elements.clipboardStatus.textContent = "已复制到本机剪切板";
+  } catch {
+    elements.clipboardText.focus();
+    elements.clipboardText.select();
+    elements.clipboardStatus.textContent = "浏览器未允许写入，请按 Ctrl/Cmd+C 复制";
+  }
+}
+
+function requireControl() {
+  if (control?.readyState === "open") return true;
+  elements.clipboardStatus.textContent = "请先连接远程桌面";
+  return false;
+}
+
+async function pushClipboard() {
+  if (!requireControl()) return;
+  let text = elements.clipboardText.value;
+  try {
+    text = await navigator.clipboard.readText();
+    elements.clipboardText.value = text;
+  } catch {
+    elements.clipboardStatus.textContent = "浏览器未允许读取，正在发送文本框内容";
+  }
+  if (new TextEncoder().encode(text).length > MAX_CLIPBOARD_BYTES) {
+    elements.clipboardStatus.textContent = "剪切板文本超过 256 KiB";
+    return;
+  }
+  send({ t: "clipboard-set", text });
+  elements.clipboardStatus.textContent = "正在发送到远端";
+}
+
+function pullClipboard() {
+  if (!requireControl()) return;
+  send({ t: "clipboard-get" });
+  elements.clipboardStatus.textContent = "正在读取远端剪切板";
 }
 
 function updateConnectionState() {
@@ -233,7 +297,7 @@ function onWheel(event) {
 }
 
 function onKey(event, down) {
-  if (!keyboardCapture || !control || document.activeElement === elements.connectButton) return;
+  if (!keyboardCapture || !control || elements.clipboardDialog.open || document.activeElement === elements.connectButton) return;
   const code = EVDEV[event.code];
   if (!code) return;
   event.preventDefault();
@@ -305,6 +369,13 @@ elements.keyboard.addEventListener("click", () => {
   elements.keyboard.classList.toggle("is-active", keyboardCapture);
   if (!keyboardCapture) releaseKeys();
 });
+elements.clipboard.addEventListener("click", () => {
+  if (document.pointerLockElement) document.exitPointerLock();
+  elements.clipboardStatus.textContent = control?.readyState === "open" ? "选择传递方向" : "请先连接远程桌面";
+  elements.clipboardDialog.showModal();
+});
+elements.clipboardPush.addEventListener("click", pushClipboard);
+elements.clipboardPull.addEventListener("click", pullClipboard);
 elements.settings.addEventListener("click", () => {
   const closed = elements.drawer.classList.toggle("is-closed");
   elements.settings.setAttribute("aria-expanded", String(!closed));

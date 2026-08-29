@@ -1,3 +1,9 @@
+rkwebscr (0.2.0) unstable; urgency=medium
+
+  * Add bidirectional text clipboard transfer over the WebRTC data channel.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 11:45:00 +0800
+
 rkwebscr (0.1.2) unstable; urgency=medium
 
   * Remove HTTP API authentication for trusted local networks.

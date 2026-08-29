@@ -424,6 +424,9 @@ class MutterSession:
 
 
 class WebRTCSession:
+    MAX_CONTROL_MESSAGE = 1024 * 1024
+    MAX_CLIPBOARD_BYTES = 256 * 1024
+
     def __init__(self, app: "Application", node_id: int):
         self.app = app
         self.node_id = node_id
@@ -585,7 +588,7 @@ class WebRTCSession:
         return GLib.SOURCE_REMOVE
 
     def _on_control_message(self, _channel, payload: str) -> None:
-        if len(payload) > 4096:
+        if len(payload) > self.MAX_CONTROL_MESSAGE:
             return
         try:
             message = json.loads(payload)
@@ -593,10 +596,69 @@ class WebRTCSession:
             return
         if not isinstance(message, dict):
             return
-        if message.get("t") == "ping":
+        kind = message.get("t")
+        if kind == "ping":
             self.send_control({"t": "pong", "at": message.get("at")})
             return
+        if kind == "clipboard-set":
+            text = message.get("text")
+            if (
+                not isinstance(text, str)
+                or len(text.encode("utf-8")) > self.MAX_CLIPBOARD_BYTES
+            ):
+                self.send_control(
+                    {
+                        "t": "clipboard-set-result",
+                        "ok": False,
+                        "error": "Clipboard text is too large",
+                    }
+                )
+                return
+            threading.Thread(target=self._write_clipboard, args=(text,), daemon=True).start()
+            return
+        if kind == "clipboard-get":
+            threading.Thread(target=self._read_clipboard, daemon=True).start()
+            return
         GLib.idle_add(self.app.mutter.dispatch_input, message)
+
+    def _write_clipboard(self, text: str) -> None:
+        try:
+            result = subprocess.run(
+                ["wl-copy", "--type", "text/plain;charset=utf-8"],
+                input=text.encode("utf-8"),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                timeout=3,
+                check=False,
+            )
+            if result.returncode:
+                raise RuntimeError(result.stderr.decode("utf-8", "replace").strip())
+            reply = {"t": "clipboard-set-result", "ok": True}
+        except (OSError, subprocess.TimeoutExpired, RuntimeError) as error:
+            reply = {"t": "clipboard-set-result", "ok": False, "error": str(error)[:160]}
+        GLib.idle_add(self.send_control, reply)
+
+    def _read_clipboard(self) -> None:
+        try:
+            result = subprocess.run(
+                ["wl-paste", "--no-newline"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=3,
+                check=False,
+            )
+            if result.returncode:
+                raise RuntimeError(result.stderr.decode("utf-8", "replace").strip())
+            if len(result.stdout) > self.MAX_CLIPBOARD_BYTES:
+                raise RuntimeError("Clipboard text is too large")
+            reply = {
+                "t": "clipboard-data",
+                "ok": True,
+                "text": result.stdout.decode("utf-8", "replace"),
+            }
+        except (OSError, subprocess.TimeoutExpired, RuntimeError) as error:
+            reply = {"t": "clipboard-data", "ok": False, "error": str(error)[:160]}
+        GLib.idle_add(self.send_control, reply)
 
     def send_control(self, message: dict) -> None:
         if not self.control:
@@ -687,7 +749,7 @@ class NativeEncoder:
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    server_version = "rkwebscr/0.1.2"
+    server_version = "rkwebscr/0.2.0"
 
     @property
     def app(self) -> "Application":

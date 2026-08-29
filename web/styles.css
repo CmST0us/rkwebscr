@@ -137,6 +137,37 @@ button { font: 500 14px/1 system-ui, sans-serif; }
 footer { display: grid; place-items: center; border-top: 1px solid var(--border); color: #aeb5ba; background: #15181a; font-size: 13px; }
 .pointer-locked footer { color: var(--blue); }
 
+.clipboard-dialog {
+  width: min(560px, calc(100% - 32px));
+  padding: 0;
+  border: 1px solid #3b4247;
+  border-radius: 7px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+}
+.clipboard-dialog::backdrop { background: rgba(0,0,0,.62); }
+.clipboard-dialog form { padding: 20px; }
+.clipboard-dialog header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.clipboard-dialog h2 { margin: 0; font-size: 18px; }
+.clipboard-dialog header button { border: 0; color: var(--muted); background: transparent; cursor: pointer; font-size: 24px; }
+.clipboard-dialog textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  background: #111315;
+  font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.clipboard-dialog textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.clipboard-dialog p { min-height: 20px; margin: 10px 0; color: var(--muted); font-size: 13px; }
+.clipboard-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.clipboard-actions button { padding: 10px 14px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--chrome-raised); cursor: pointer; }
+.clipboard-actions button:hover { border-color: var(--blue); }
+
 @media (max-width: 900px) {
   .toolbar { gap: 12px; padding: 0 12px; }
   .metrics span:nth-child(1), .metrics span:nth-child(3) { display: none; }

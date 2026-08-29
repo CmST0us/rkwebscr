@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0 - 2026-08-29
+
+- Add bidirectional text clipboard transfer between the browser and GNOME.
+
 ## 0.1.2 - 2026-08-29
 
 - Remove HTTP control authentication for trusted local networks.

@@ -28,6 +28,7 @@ Depends: ${shlibs:Depends},
  gstreamer1.0-plugins-bad,
  gstreamer1.0-nice,
  libei1,
+ wl-clipboard,
  gnome-shell
 Description: low-latency GNOME streaming for Rockchip
  rkwebscr creates a headless GNOME Wayland display and streams it to a web

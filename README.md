@@ -11,6 +11,7 @@ LAN. It is tested on Radxa ROCK 5B with Ubuntu 24.04 and GNOME 46.
 - Rockchip MPP H.264 hardware encoding
 - Opus system audio and WebRTC transport
 - Keyboard, absolute mouse, relative mouse, and wheel input through libei
+- Bidirectional text clipboard transfer through Wayland
 - Direct HTTP control on a trusted local network
 
 The hot video path is:
@@ -59,7 +60,7 @@ Build the Debian binary package:
 make deb
 ```
 
-`dpkg-buildpackage` writes `rkwebscr_0.1.2_<architecture>.deb` to the parent
+`dpkg-buildpackage` writes `rkwebscr_0.2.0_<architecture>.deb` to the parent
 directory, following normal Debian source-package conventions.
 
 ## Installed files
@@ -82,7 +83,7 @@ The Debian package uses the standard Ubuntu filesystem layout:
 Install the package and enable lingering for the desktop user:
 
 ```bash
-sudo apt install ../rkwebscr_0.1.2_arm64.deb
+sudo apt install ../rkwebscr_0.2.0_arm64.deb
 sudo usermod -aG video "$USER"
 sudo loginctl enable-linger "$USER"
 ```
@@ -112,6 +113,11 @@ adb forward tcp:18080 tcp:8080
 Then open `http://127.0.0.1:18080/` in Chrome. WebRTC media is DTLS-SRTP
 encrypted, but the HTTP control endpoint has no authentication. Run it only on
 a trusted LAN or behind an ADB or SSH tunnel.
+
+Use the clipboard button in the toolbar to transfer text in either direction.
+On localhost the browser can usually read and write the local clipboard
+directly. On plain HTTP LAN addresses, use the dialog's text box if the browser
+blocks its Clipboard API.
 
 ## Configuration
 
