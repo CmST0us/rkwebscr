@@ -487,7 +487,6 @@ class WebRTCSession:
             webrtcbin name=webrtc bundle-policy=max-bundle latency=0
             appsrc name=screen is-live=true format=time block=true max-buffers=3 max-bytes=0 max-time=0 !
               video/x-h264,stream-format=byte-stream,alignment=au,width={c.width},height={c.height},framerate={c.fps}/1 !
-              queue max-size-buffers=6 max-size-bytes=0 max-size-time=0 min-threshold-buffers=3 !
               clocksync sync=true sync-to-first=true !
               h264parse config-interval=-1 disable-passthrough=true !
               video/x-h264,stream-format=byte-stream,alignment=au,profile=baseline !
