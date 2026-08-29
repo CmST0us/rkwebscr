@@ -456,7 +456,9 @@ class WebRTCSession:
         self.pipeline: Gst.Pipeline | None = None
         self.webrtc: Gst.Element | None = None
         self.screen: Gst.Element | None = None
+        self.microphone: Gst.Bin | None = None
         self.control = None
+        self._previous_audio_source: str | None = None
         self._frame_duration = Gst.SECOND // app.config.fps
         self._last_frame_ns = 0
         self._next_pts = 0
@@ -530,6 +532,7 @@ class WebRTCSession:
 
         self.webrtc.connect("notify::ice-gathering-state", self._on_ice_state)
         self.webrtc.connect("notify::connection-state", self._on_connection_state)
+        self.webrtc.connect("pad-added", self._on_incoming_stream)
 
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
@@ -560,12 +563,92 @@ class WebRTCSession:
     def close(self) -> None:
         if self.pipeline:
             self.pipeline.set_state(Gst.State.NULL)
+        if self._previous_audio_source:
+            self._set_default_audio_source(self._previous_audio_source)
         self.pipeline = None
         self.webrtc = None
         self.nice_agent = None
         self.ice = None
         self.screen = None
+        self.microphone = None
         self.control = None
+
+    def _on_incoming_stream(self, _webrtc, pad: Gst.Pad) -> None:
+        caps = pad.get_current_caps()
+        if self.microphone or not self.pipeline or not caps or caps.is_empty():
+            return
+        if caps.get_structure(0).get_string("media") != "audio":
+            return
+        self._previous_audio_source = self._get_default_audio_source()
+        microphone = Gst.parse_bin_from_description(
+            "queue max-size-buffers=16 max-size-bytes=0 max-size-time=200000000 ! "
+            "rtpopusdepay ! opusdec plc=true ! audioconvert ! audioresample ! "
+            "audio/x-raw,rate=48000,channels=1 ! "
+            "pipewiresink name=microphone mode=provide sync=false async=false",
+            True,
+        )
+        sink = microphone.get_by_name("microphone")
+        sink.set_property("client-name", "rkwebscr-microphone")
+        props = Gst.Structure.new_empty("props")
+        props.set_value("media.class", "Audio/Source")
+        props.set_value("media.role", "Communication")
+        props.set_value("node.name", "rkwebscr_microphone")
+        props.set_value("node.description", "rkwebscr Microphone")
+        sink.set_property("stream-properties", props)
+        self.pipeline.add(microphone)
+        sink_pad = microphone.get_static_pad("sink")
+        result = pad.link(sink_pad)
+        if result != Gst.PadLinkReturn.OK or not microphone.sync_state_with_parent():
+            pad.unlink(sink_pad)
+            self.pipeline.remove(microphone)
+            LOG.error("Could not connect browser microphone: %s", result)
+            return
+        self.microphone = microphone
+        GLib.timeout_add(250, self._make_microphone_default)
+        LOG.info("Browser microphone is available as rkwebscr_microphone")
+
+    @staticmethod
+    def _get_default_audio_source() -> str | None:
+        try:
+            result = subprocess.run(
+                ["wpctl", "inspect", "@DEFAULT_AUDIO_SOURCE@"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        marker = "node.name = \""
+        for line in result.stdout.splitlines():
+            if marker in line:
+                return line.split(marker, 1)[1].split('"', 1)[0]
+        return None
+
+    @staticmethod
+    def _set_default_audio_source(name: str) -> None:
+        try:
+            subprocess.run(
+                [
+                    "pw-metadata",
+                    "-n",
+                    "default",
+                    "0",
+                    "default.audio.source",
+                    json.dumps({"name": name}, separators=(",", ":")),
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            LOG.warning("Could not select PipeWire audio source %s", name)
+
+    def _make_microphone_default(self) -> bool:
+        if self.microphone:
+            self._set_default_audio_source("rkwebscr_microphone")
+        return GLib.SOURCE_REMOVE
 
     def create_offer(self, timeout: float = 12.0) -> str:
         if not self.webrtc:
@@ -801,7 +884,7 @@ class NativeEncoder:
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    server_version = "rkwebscr/0.3.8"
+    server_version = "rkwebscr/0.4.0"
 
     @property
     def app(self) -> "Application":

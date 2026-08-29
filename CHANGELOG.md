@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 - 2026-08-29
+
+- Forward the browser microphone to a PipeWire source selected as GNOME's default input.
+- Add separate speaker and microphone controls to the web client.
+
 ## 0.3.8 - 2026-08-29
 
 - Use the browser's native WebRTC video compositor instead of a second canvas

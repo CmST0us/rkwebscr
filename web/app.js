@@ -19,6 +19,7 @@ const elements = {
   fullscreen: $("#fullscreenButton"),
   fit: $("#fitButton"),
   audio: $("#audioButton"),
+  microphone: $("#microphoneButton"),
   keyboard: $("#keyboardButton"),
   clipboard: $("#clipboardButton"),
   clipboardDialog: $("#clipboardDialog"),
@@ -61,6 +62,8 @@ let status = null;
 let peer = null;
 let control = null;
 let stream = null;
+let microphoneStream = null;
+let microphoneEnabled = true;
 let keyboardCapture = true;
 let metricsTimer = null;
 let lastStats = null;
@@ -104,6 +107,19 @@ async function connect() {
   try {
     await refreshStatus();
     closePeer();
+    if (microphoneEnabled) {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error("此地址不允许访问麦克风");
+        microphoneStream = await navigator.mediaDevices.getUserMedia({
+          video: false,
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        });
+        updateMicrophoneButton();
+      } catch (error) {
+        microphoneEnabled = false;
+        updateMicrophoneButton(error.message);
+      }
+    }
     peer = new RTCPeerConnection({ bundlePolicy: "max-bundle" });
     stream = new MediaStream();
     elements.video.srcObject = stream;
@@ -113,7 +129,10 @@ async function connect() {
       if (track.kind === "video" && "jitterBufferTarget" in receiver) {
         try { receiver.jitterBufferTarget = 100; } catch {}
       }
-      elements.video.play().catch(() => {});
+      elements.video.play().catch(() => {
+        elements.video.muted = true;
+        updateAudioButton("浏览器阻止了声音，点击启用");
+      });
     };
     peer.ondatachannel = ({ channel }) => attachControl(channel);
     peer.onconnectionstatechange = updateConnectionState;
@@ -126,6 +145,9 @@ async function connect() {
       headers: usb ? { "X-Rkwebscr-Transport": "usb" } : {},
     });
     await peer.setRemoteDescription(offer);
+    const microphoneTrack = microphoneStream?.getAudioTracks()[0];
+    const audioTransceiver = peer.getTransceivers().find(({ receiver }) => receiver.track.kind === "audio");
+    if (microphoneTrack && audioTransceiver) await audioTransceiver.sender.replaceTrack(microphoneTrack);
     const answer = await peer.createAnswer();
     await peer.setLocalDescription(answer);
     await waitForIceGathering(peer);
@@ -232,6 +254,8 @@ function closePeer() {
   control = null;
   peer?.close();
   peer = null;
+  microphoneStream?.getTracks().forEach((track) => track.stop());
+  microphoneStream = null;
   stream = null;
   elements.video.srcObject = null;
   elements.toolbar.classList.remove("is-online");
@@ -249,6 +273,20 @@ function showError(message) {
   elements.overlay.classList.remove("is-hidden");
   elements.connectMessage.textContent = message;
   elements.connectButton.textContent = "重试";
+}
+
+function updateAudioButton(message = "") {
+  const muted = elements.video.muted;
+  elements.audio.classList.toggle("is-muted", muted);
+  elements.audio.title = message || (muted ? "开启声音" : "静音");
+  elements.audio.setAttribute("aria-label", elements.audio.title);
+}
+
+function updateMicrophoneButton(message = "") {
+  elements.microphone.classList.toggle("is-muted", !microphoneEnabled);
+  elements.microphone.classList.toggle("is-active", microphoneEnabled);
+  elements.microphone.title = message || (microphoneEnabled ? "关闭麦克风" : "开启麦克风");
+  elements.microphone.setAttribute("aria-label", elements.microphone.title);
 }
 
 function send(message) {
@@ -399,9 +437,25 @@ elements.fit.addEventListener("click", () => {
   elements.fit.classList.toggle("is-active", !original);
   elements.fit.title = original ? "适应窗口" : "原始大小";
 });
-elements.audio.addEventListener("click", () => {
+elements.audio.addEventListener("click", async () => {
   elements.video.muted = !elements.video.muted;
-  elements.audio.classList.toggle("is-muted", elements.video.muted);
+  if (!elements.video.muted) {
+    try {
+      await elements.video.play();
+    } catch {
+      elements.video.muted = true;
+      updateAudioButton("浏览器阻止了声音，请再点击一次");
+      return;
+    }
+  }
+  updateAudioButton();
+});
+elements.microphone.addEventListener("click", () => {
+  microphoneEnabled = !microphoneEnabled;
+  const track = microphoneStream?.getAudioTracks()[0];
+  if (track) track.enabled = microphoneEnabled;
+  updateMicrophoneButton();
+  if (microphoneEnabled && !track) connect();
 });
 elements.keyboard.addEventListener("click", () => {
   keyboardCapture = !keyboardCapture;
@@ -448,3 +502,5 @@ refreshStatus().then(() => {
   elements.connectMessage.textContent = error.message;
   elements.connectButton.textContent = "重试";
 });
+updateAudioButton();
+updateMicrophoneButton();

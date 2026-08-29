@@ -16,6 +16,9 @@ grep -q 'send_signal(signal.SIGUSR1)' server/rkwebscrd.py
 grep -q 'USB_ICE_PORT = 8090' server/rkwebscrd.py
 grep -q 'X-Rkwebscr-Transport' web/app.js
 grep -q 'opusenc' server/rkwebscrd.py
+grep -q 'rtpopusdepay' server/rkwebscrd.py
+grep -q 'mode=provide' server/rkwebscrd.py
+grep -q 'rkwebscr_microphone' server/rkwebscrd.py
 grep -q 'ConnectToEIS' server/rkwebscrd.py
 grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
 grep -q 'max-buffers=3' server/rkwebscrd.py
@@ -42,8 +45,8 @@ grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.servic
 grep -q 'GNOME_SHELL_SESSION_MODE=ubuntu' systemd/rkwebscr-headless.service
 grep -q 'XDG_CURRENT_DESKTOP=ubuntu:GNOME' systemd/rkwebscr.service
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.3.8)' debian/changelog
-grep -q 'server_version = "rkwebscr/0.3.8"' server/rkwebscrd.py
+grep -q '^rkwebscr (0.4.0)' debian/changelog
+grep -q 'server_version = "rkwebscr/0.4.0"' server/rkwebscrd.py
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
@@ -69,6 +72,8 @@ grep -q 'wl-copy' server/rkwebscrd.py
 grep -q 'stderr=subprocess.DEVNULL' server/rkwebscrd.py
 grep -q 'clipboardDialog' web/app.js
 grep -q 'clipboardDialog' web/index.html
+grep -q 'getUserMedia' web/app.js
+grep -q 'microphoneButton' web/index.html
 grep -q 'jitterBufferTarget = 100' web/app.js
 grep -q '1000 / (status?.video.fps || 60)' web/app.js
 grep -q 'moveTimer = setInterval' web/app.js

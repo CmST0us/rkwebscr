@@ -9,7 +9,7 @@ LAN. It is tested on Radxa ROCK 5B with Ubuntu 24.04 and GNOME 46.
 - Ubuntu GNOME session mode on a Mutter `RecordVirtual` headless display; HDMI is not required
 - PipeWire linear DMA-BUF capture
 - Rockchip MPP H.264 hardware encoding
-- Opus system audio and WebRTC transport
+- Bidirectional Opus audio: system output to the browser and browser microphone to GNOME
 - Display-refresh-aligned browser rendering with a bounded frame buffer
 - Frame-rate-coalesced pointer input plus keyboard and wheel control through libei
 - Bidirectional text clipboard transfer through Wayland
@@ -68,7 +68,7 @@ Build the Debian binary package:
 make deb
 ```
 
-`dpkg-buildpackage` writes `rkwebscr_0.3.8_<architecture>.deb` to the parent
+`dpkg-buildpackage` writes `rkwebscr_0.4.0_<architecture>.deb` to the parent
 directory, following normal Debian source-package conventions.
 
 ## Installed files
@@ -94,7 +94,7 @@ The Debian package uses the standard Ubuntu filesystem layout:
 Install the package and enable lingering for the desktop user:
 
 ```bash
-sudo apt install ../rkwebscr_0.3.8_arm64.deb
+sudo apt install ../rkwebscr_0.4.0_arm64.deb
 sudo usermod -aG video "$USER"
 sudo loginctl enable-linger "$USER"
 ```
@@ -135,6 +135,9 @@ Use the clipboard button in the toolbar to transfer text in either direction.
 On localhost the browser can usually read and write the local clipboard
 directly. On plain HTTP LAN addresses, use the dialog's text box if the browser
 blocks its Clipboard API.
+
+Browser microphone capture is available on the USB localhost URL. Browsers
+require HTTPS before granting microphone access to a plain LAN hostname.
 
 ## Configuration
 

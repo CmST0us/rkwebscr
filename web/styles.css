@@ -73,9 +73,9 @@ button { font: 500 14px/1 system-ui, sans-serif; }
 .icon-button.is-active { color: var(--blue); border-color: rgba(99,169,255,.45); background: rgba(99,169,255,.08); }
 .icon-button.danger { color: var(--danger); }
 .icon-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.audio-off { display: none; }
-.is-muted .audio-on { display: none; }
-.is-muted .audio-off { display: block; }
+.audio-off, .microphone-off { display: none; }
+.is-muted .audio-on, .is-muted .microphone-on { display: none; }
+.is-muted .audio-off, .is-muted .microphone-off { display: block; }
 
 .viewport {
   position: relative;
@@ -179,7 +179,7 @@ footer { display: grid; place-items: center; border-top: 1px solid var(--border)
 @media (max-width: 620px) {
   .app-shell { grid-template-rows: 62px minmax(0, 1fr) 44px; }
   .identity .connection-label, .metrics { display: none; }
-  .icon-button:nth-child(2), .icon-button:nth-child(4) { display: none; }
+  .icon-button:nth-child(2), .icon-button:nth-child(5) { display: none; }
   footer { font-size: 11px; }
 }
 
