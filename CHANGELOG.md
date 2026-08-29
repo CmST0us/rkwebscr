@@ -4,6 +4,7 @@
 
 - Remove the ADB-forwarded USB transport and use normal LAN ICE candidates.
 - Expose HTTP on port 80 while keeping the application backend on loopback.
+- Start normally when no application is producing desktop audio yet.
 
 ## 0.4.0 - 2026-08-29
 

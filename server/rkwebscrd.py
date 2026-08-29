@@ -993,9 +993,12 @@ class Application:
         props.set_value("node.name", "rkwebscr_output")
         props.set_value("node.description", "rkwebscr Output")
         output.set_property("stream-properties", props)
-        if self.audio_output.set_state(Gst.State.PLAYING) == Gst.StateChangeReturn.FAILURE:
-            raise RuntimeError("Could not create the PipeWire audio output")
+        threading.Thread(target=self._play_audio_output, daemon=True).start()
         GLib.timeout_add(250, self._make_audio_output_default)
+
+    def _play_audio_output(self) -> None:
+        if self.audio_output.set_state(Gst.State.PLAYING) == Gst.StateChangeReturn.FAILURE:
+            LOG.error("Could not create the PipeWire audio output")
 
     def _start_microphone_loopback(self) -> None:
         self._previous_audio_source = pipewire_default_node("@DEFAULT_AUDIO_SOURCE@")

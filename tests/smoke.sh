@@ -22,6 +22,7 @@ grep -q 'opusenc' server/rkwebscrd.py
 grep -q 'rtpopusdepay' server/rkwebscrd.py
 grep -q 'rkwebscr_microphone' server/rkwebscrd.py
 grep -q 'rkwebscr_output' server/rkwebscrd.py
+grep -q 'threading.Thread(target=self._play_audio_output' server/rkwebscrd.py
 grep -q 'pw-loopback' server/rkwebscrd.py
 grep -q 'target-object=rkwebscr_mic_sink' server/rkwebscrd.py
 grep -q 'interaudiosrc channel=rkwebscr' server/rkwebscrd.py
