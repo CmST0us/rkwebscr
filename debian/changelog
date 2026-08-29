@@ -1,3 +1,9 @@
+rkwebscr (0.3.1) unstable; urgency=medium
+
+  * Configure the mDNS hostname before Avahi starts.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 13:25:00 +0800
+
 rkwebscr (0.3.0) unstable; urgency=medium
 
   * Advertise the web service through mDNS and DNS-SD.

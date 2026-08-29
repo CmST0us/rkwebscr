@@ -1,11 +1,4 @@
 #!/bin/sh
 set -e
 
-if [ "$1" = remove ] || [ "$1" = deconfigure ]; then
-  if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl disable --now rkwebscr-mdns.service >/dev/null 2>&1 || true
-    systemctl reload avahi-daemon.service >/dev/null 2>&1 || true
-  fi
-fi
-
 exit 0

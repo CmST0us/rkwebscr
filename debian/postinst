@@ -7,9 +7,9 @@ if [ "$1" = configure ]; then
     udevadm trigger --subsystem-match=mpp_class --subsystem-match=misc --subsystem-match=dma_heap || true
   fi
   if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    systemctl disable --now rkwebscr-mdns.service >/dev/null 2>&1 || true
     systemctl daemon-reload || true
-    systemctl reload-or-restart avahi-daemon.service || true
-    systemctl enable --now rkwebscr-mdns.service >/dev/null 2>&1 || true
+    systemctl restart avahi-daemon.service || true
   fi
 fi
 
