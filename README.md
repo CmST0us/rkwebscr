@@ -11,7 +11,7 @@ LAN. It is tested on Radxa ROCK 5B with Ubuntu 24.04 and GNOME 46.
 - Rockchip MPP H.264 hardware encoding
 - Opus system audio and WebRTC transport
 - Display-refresh-aligned browser rendering with a bounded frame buffer
-- Keyboard, absolute mouse, relative mouse, and wheel input through libei
+- Frame-rate-coalesced pointer input plus keyboard and wheel control through libei
 - Bidirectional text clipboard transfer through Wayland
 - `rkwebscr.local` mDNS hostname and DNS-SD service discovery
 - Direct HTTP control on a trusted local network

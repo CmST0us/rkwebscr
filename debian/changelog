@@ -4,6 +4,7 @@ rkwebscr (0.3.6) unstable; urgency=medium
   * Keep LAN clients on the normal ICE transport.
   * Pin tested RK3588 clocks below the unstable all-domain maximum.
   * Smooth browser presentation against the local display refresh.
+  * Coalesce high-rate pointer motion on a continuous frame-rate clock.
 
  -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 17:55:00 +0800
 

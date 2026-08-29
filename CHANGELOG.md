@@ -8,6 +8,8 @@
   60 FPS rendering.
 - Align browser presentation to the local display refresh with a bounded
   `ImageBitmap` frame buffer, avoiding clustered frame-time stalls.
+- Coalesce high-rate pointer motion on a continuous frame-rate clock so input
+  does not starve GNOME rendering.
 
 ## 0.3.5 - 2026-08-29
 

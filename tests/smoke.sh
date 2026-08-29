@@ -73,6 +73,7 @@ grep -q 'requestVideoFrameCallback' web/app.js
 grep -q 'createImageBitmap(video)' web/app.js
 grep -q 'jitterBufferTarget = 100' web/app.js
 grep -q '1000 / (status?.video.fps || 60)' web/app.js
+grep -q 'moveTimer = setInterval' web/app.js
 grep -q 'remoteCanvas' web/index.html
 test -f LICENSE
 test -f CHANGELOG.md
