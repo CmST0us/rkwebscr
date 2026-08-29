@@ -1,10 +1,16 @@
 #!/bin/sh
 set -e
 
-if [ "$1" = configure ] && command -v udevadm >/dev/null 2>&1; then
-  udevadm control --reload-rules || true
-  udevadm trigger --subsystem-match=mpp_class --subsystem-match=misc --subsystem-match=dma_heap || true
+if [ "$1" = configure ]; then
+  if command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules || true
+    udevadm trigger --subsystem-match=mpp_class --subsystem-match=misc --subsystem-match=dma_heap || true
+  fi
+  if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    systemctl daemon-reload || true
+    systemctl reload-or-restart avahi-daemon.service || true
+    systemctl enable --now rkwebscr-mdns.service >/dev/null 2>&1 || true
+  fi
 fi
 
 exit 0
-

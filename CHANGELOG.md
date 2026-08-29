@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0 - 2026-08-29
+
+- Advertise `rkwebscr.local` and the `_rkwebscr._tcp`/`_http._tcp` services
+  through Avahi mDNS.
+
 ## 0.2.1 - 2026-08-29
 
 - Match the headless desktop to the standard Ubuntu GNOME session, including

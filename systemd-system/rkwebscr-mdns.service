@@ -1,0 +1,14 @@
+[Unit]
+Description=rkwebscr mDNS hostname
+BindsTo=avahi-daemon.service
+PartOf=avahi-daemon.service
+After=avahi-daemon.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/avahi-set-host-name rkwebscr
+ExecStop=-/bin/sh -c 'exec /usr/bin/avahi-set-host-name "$(/bin/hostname)"'
+
+[Install]
+WantedBy=avahi-daemon.service

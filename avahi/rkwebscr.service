@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name>rkwebscr</name>
+  <service>
+    <type>_rkwebscr._tcp</type>
+    <port>8080</port>
+    <txt-record>path=/</txt-record>
+    <txt-record>transport=WebRTC</txt-record>
+  </service>
+  <service>
+    <type>_http._tcp</type>
+    <port>8080</port>
+    <txt-record>path=/</txt-record>
+  </service>
+</service-group>

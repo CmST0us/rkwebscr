@@ -1,3 +1,10 @@
+rkwebscr (0.3.0) unstable; urgency=medium
+
+  * Advertise the web service through mDNS and DNS-SD.
+  * Make the service available at rkwebscr.local on the LAN.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 13:00:00 +0800
+
 rkwebscr (0.2.1) unstable; urgency=medium
 
   * Run the headless shell in Ubuntu session mode with Ubuntu extensions.

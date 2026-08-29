@@ -2,6 +2,7 @@
 set -eu
 
 python3 -m py_compile server/rkwebscrd.py
+python3 -c 'import xml.etree.ElementTree as E; E.parse("avahi/rkwebscr.service")'
 if command -v node >/dev/null 2>&1; then
   node --check web/app.js
 fi
@@ -19,7 +20,7 @@ grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.servic
 grep -q 'GNOME_SHELL_SESSION_MODE=ubuntu' systemd/rkwebscr-headless.service
 grep -q 'XDG_CURRENT_DESKTOP=ubuntu:GNOME' systemd/rkwebscr.service
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.2.1)' debian/changelog
+grep -q '^rkwebscr (0.3.0)' debian/changelog
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
@@ -33,6 +34,9 @@ fi
 grep -q 'rockchip-mpp-dev' debian/control
 grep -q 'wl-clipboard' debian/control
 grep -q 'ubuntu-session' debian/control
+grep -q 'avahi-utils' debian/control
+grep -q '_rkwebscr._tcp' avahi/rkwebscr.service
+grep -q 'avahi-set-host-name rkwebscr' systemd-system/rkwebscr-mdns.service
 grep -q 'clipboard-set' server/rkwebscrd.py
 grep -q 'wl-copy' server/rkwebscrd.py
 grep -q 'stderr=subprocess.DEVNULL' server/rkwebscrd.py
@@ -43,4 +47,5 @@ test -f CHANGELOG.md
 test -f CONTRIBUTING.md
 sh -n scripts/rkwebscr-setup
 sh -n debian/postinst
+sh -n debian/prerm
 printf '%s\n' 'smoke checks passed'

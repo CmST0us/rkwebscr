@@ -12,6 +12,7 @@ LAN. It is tested on Radxa ROCK 5B with Ubuntu 24.04 and GNOME 46.
 - Opus system audio and WebRTC transport
 - Keyboard, absolute mouse, relative mouse, and wheel input through libei
 - Bidirectional text clipboard transfer through Wayland
+- `rkwebscr.local` mDNS hostname and DNS-SD service discovery
 - Direct HTTP control on a trusted local network
 
 The hot video path is:
@@ -32,6 +33,8 @@ native/     DMA-BUF to Rockchip MPP encoder
 server/     GNOME, WebRTC, input, and HTTP service
 web/        Browser client
 systemd/    User services for headless GNOME and rkwebscr
+systemd-system/ System service for the mDNS hostname
+avahi/      DNS-SD service advertisement
 udev/       Rockchip media-device permissions
 scripts/    Post-install user setup
 debian/     Debian source-package metadata
@@ -60,7 +63,7 @@ Build the Debian binary package:
 make deb
 ```
 
-`dpkg-buildpackage` writes `rkwebscr_0.2.1_<architecture>.deb` to the parent
+`dpkg-buildpackage` writes `rkwebscr_0.3.0_<architecture>.deb` to the parent
 directory, following normal Debian source-package conventions.
 
 ## Installed files
@@ -74,6 +77,8 @@ The Debian package uses the standard Ubuntu filesystem layout:
 /usr/share/rkwebscr/web/                         architecture-independent web UI
 /usr/lib/systemd/user/rkwebscr.service           user service
 /usr/lib/systemd/user/rkwebscr-headless.service  headless GNOME user service
+/usr/lib/systemd/system/rkwebscr-mdns.service    mDNS hostname service
+/etc/avahi/services/rkwebscr.service             DNS-SD service description
 /usr/lib/udev/rules.d/99-rkwebscr-rockchip.rules device permissions
 /usr/share/doc/rkwebscr/                         package documentation
 ```
@@ -83,7 +88,7 @@ The Debian package uses the standard Ubuntu filesystem layout:
 Install the package and enable lingering for the desktop user:
 
 ```bash
-sudo apt install ../rkwebscr_0.2.1_arm64.deb
+sudo apt install ../rkwebscr_0.3.0_arm64.deb
 sudo usermod -aG video "$USER"
 sudo loginctl enable-linger "$USER"
 ```
@@ -103,6 +108,9 @@ rkwebscr-setup
 ```
 
 The command enables both user services and prints the local and LAN URLs.
+On the same LAN, open `http://rkwebscr.local:8080/`; Avahi also advertises
+`_rkwebscr._tcp` and `_http._tcp`. If another device already owns the same
+mDNS name, Avahi may add a numeric suffix to avoid a collision.
 
 For USB instead of LAN transport:
 
