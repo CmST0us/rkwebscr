@@ -9,7 +9,7 @@ Type=simple
 KillMode=mixed
 Environment=PYTHONUNBUFFERED=1
 Environment=GST_REGISTRY=%t/rkwebscr-gstreamer-registry.bin
-Environment=RKWEBSCR_CAPTURE_FPS=64
+Environment=RKWEBSCR_CAPTURE_FPS=66
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=DISPLAY=:0
 Environment=XDG_SESSION_TYPE=wayland

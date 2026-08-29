@@ -21,7 +21,7 @@ grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
 grep -q 'max-buffers=3' server/rkwebscrd.py
 grep -q 'clocksync sync=true sync-to-first=true' server/rkwebscrd.py
 grep -q 'Gst.SECOND // 4' server/rkwebscrd.py
-grep -q 'RKWEBSCR_CAPTURE_FPS=64' systemd/rkwebscr.service
+grep -q 'RKWEBSCR_CAPTURE_FPS=66' systemd/rkwebscr.service
 grep -q 'RKWEBSCR_GPU_HZ=900000000' systemd-system/rkwebscr-performance.service
 grep -q 'RKWEBSCR_DMC_HZ=2112000000' systemd-system/rkwebscr-performance.service
 grep -q 'printf %%s' systemd-system/rkwebscr-performance.service
