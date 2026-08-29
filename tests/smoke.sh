@@ -69,13 +69,13 @@ grep -q 'wl-copy' server/rkwebscrd.py
 grep -q 'stderr=subprocess.DEVNULL' server/rkwebscrd.py
 grep -q 'clipboardDialog' web/app.js
 grep -q 'clipboardDialog' web/index.html
-grep -q 'requestVideoFrameCallback' web/app.js
-grep -q 'createImageBitmap(video)' web/app.js
 grep -q 'jitterBufferTarget = 100' web/app.js
-grep -q 'const catchUp = divisor > 1 && state.frames.length > 4' web/app.js
 grep -q '1000 / (status?.video.fps || 60)' web/app.js
 grep -q 'moveTimer = setInterval' web/app.js
-grep -q 'remoteCanvas' web/index.html
+if grep -R -E -q 'FrameSmoother|remoteCanvas|createImageBitmap\(video\)|is-smoothed' web; then
+  printf '%s\n' 'secondary browser frame clock found' >&2
+  exit 1
+fi
 test -f LICENSE
 test -f CHANGELOG.md
 test -f CONTRIBUTING.md
