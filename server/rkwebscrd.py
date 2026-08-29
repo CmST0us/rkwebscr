@@ -449,7 +449,6 @@ class MutterSession:
 class WebRTCSession:
     MAX_CONTROL_MESSAGE = 1024 * 1024
     MAX_CLIPBOARD_BYTES = 256 * 1024
-    MAX_RAW_VIDEO_BUFFERED = 4 * 1024 * 1024
 
     def __init__(self, app: "Application", node_id: int):
         self.app = app
@@ -458,9 +457,6 @@ class WebRTCSession:
         self.webrtc: Gst.Element | None = None
         self.screen: Gst.Element | None = None
         self.control = None
-        self.raw_video = None
-        self._raw_video_open = False
-        self._raw_video_enabled = False
         self._frame_duration = Gst.SECOND // app.config.fps
         self._last_frame_ns = 0
         self._next_pts = 0
@@ -545,11 +541,6 @@ class WebRTCSession:
         if not self.control:
             raise RuntimeError("Could not create the WebRTC control data channel")
         self.control.connect("on-message-string", self._on_control_message)
-        self.raw_video = self.webrtc.emit("create-data-channel", "video", None)
-        if not self.raw_video:
-            raise RuntimeError("Could not create the WebRTC video data channel")
-        self.raw_video.connect("on-open", self._on_raw_video_open)
-        self.raw_video.connect("on-close", self._on_raw_video_close)
         LOG.info("GStreamer pipeline started: %dx%d@%d, %d bps", c.width, c.height, c.fps, c.bitrate)
 
     def push_frame(self, data: bytes) -> None:
@@ -565,17 +556,6 @@ class WebRTCSession:
         buffer.duration = self._frame_duration
         self._next_pts += self._frame_duration
         self.screen.emit("push-buffer", buffer)
-        if (
-            self.raw_video
-            and self._raw_video_open
-            and self._raw_video_enabled
-            and self.raw_video.get_property("buffered-amount") < self.MAX_RAW_VIDEO_BUFFERED
-        ):
-            try:
-                self.raw_video.emit("send-data", GLib.Bytes.new(data))
-            except GLib.Error as error:
-                LOG.warning("Raw video data channel failed: %s", error.message)
-                self._raw_video_enabled = False
 
     def close(self) -> None:
         if self.pipeline:
@@ -586,9 +566,6 @@ class WebRTCSession:
         self.ice = None
         self.screen = None
         self.control = None
-        self.raw_video = None
-        self._raw_video_open = False
-        self._raw_video_enabled = False
 
     def create_offer(self, timeout: float = 12.0) -> str:
         if not self.webrtc:
@@ -671,11 +648,6 @@ class WebRTCSession:
         if kind == "ping":
             self.send_control({"t": "pong", "at": message.get("at")})
             return
-        if kind == "raw-video":
-            self._raw_video_enabled = message.get("enable") is True
-            if self._raw_video_enabled and self._raw_video_open and self.app.encoder:
-                self.app.encoder.force_keyframe()
-            return
         if kind == "clipboard-set":
             text = message.get("text")
             if (
@@ -696,15 +668,6 @@ class WebRTCSession:
             threading.Thread(target=self._read_clipboard, daemon=True).start()
             return
         GLib.idle_add(self.app.mutter.dispatch_input, message)
-
-    def _on_raw_video_open(self, _channel) -> None:
-        self._raw_video_open = True
-        if self._raw_video_enabled and self.app.encoder:
-            self.app.encoder.force_keyframe()
-
-    def _on_raw_video_close(self, _channel) -> None:
-        self._raw_video_open = False
-        self._raw_video_enabled = False
 
     def _write_clipboard(self, text: str) -> None:
         try:
