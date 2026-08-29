@@ -354,7 +354,18 @@ void on_param_changed(void *data, uint32_t id, const spa_pod *param) {
     pw_stream_update_params(self->stream, params, 2);
 }
 
-void process_buffer(State *self, pw_buffer *buffer) {
+void on_process(void *data) {
+    auto *self = static_cast<State *>(data);
+    pw_buffer *buffer = nullptr;
+    pw_buffer *next = nullptr;
+    while ((next = pw_stream_dequeue_buffer(self->stream))) {
+        if (buffer)
+            pw_stream_queue_buffer(self->stream, buffer);
+        buffer = next;
+    }
+    if (!buffer)
+        return;
+
     spa_buffer *spa_buffer = buffer->buffer;
     if (spa_buffer->n_datas == 0 || spa_buffer->datas[0].type != SPA_DATA_DmaBuf ||
         spa_buffer->datas[0].fd < 0) {
@@ -429,12 +440,6 @@ void process_buffer(State *self, pw_buffer *buffer) {
         previous = encoded;
         self->stats_at = now;
     }
-}
-
-void on_process(void *data) {
-    auto *self = static_cast<State *>(data);
-    while (auto *buffer = pw_stream_dequeue_buffer(self->stream))
-        process_buffer(self, buffer);
 }
 
 const pw_stream_events stream_events = [] {
