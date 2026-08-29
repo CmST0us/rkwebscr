@@ -69,6 +69,9 @@ grep -q 'wl-copy' server/rkwebscrd.py
 grep -q 'stderr=subprocess.DEVNULL' server/rkwebscrd.py
 grep -q 'clipboardDialog' web/app.js
 grep -q 'clipboardDialog' web/index.html
+grep -q 'create-data-channel", "video"' server/rkwebscrd.py
+grep -q 'kind == "raw-video"' server/rkwebscrd.py
+grep -q 'channel.label === "control"' web/app.js
 test -f LICENSE
 test -f CHANGELOG.md
 test -f CONTRIBUTING.md

@@ -111,7 +111,9 @@ async function connect() {
       stream.addTrack(track);
       elements.video.play().catch(() => {});
     };
-    peer.ondatachannel = ({ channel }) => attachControl(channel);
+    peer.ondatachannel = ({ channel }) => {
+      if (channel.label === "control") attachControl(channel);
+    };
     peer.onconnectionstatechange = updateConnectionState;
 
     elements.connectMessage.textContent = "正在协商 WebRTC";
