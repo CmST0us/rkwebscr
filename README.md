@@ -6,7 +6,7 @@ LAN. It is tested on Radxa ROCK 5B with Ubuntu 24.04 and GNOME 46.
 
 ## Features
 
-- Ubuntu GNOME session mode on a Mutter `RecordVirtual` headless display; HDMI is not required
+- Ubuntu GNOME session mode on a persistent Mutter 60 Hz virtual monitor; HDMI is not required
 - PipeWire linear DMA-BUF capture
 - Rockchip MPP H.264 hardware encoding
 - Opus system audio and WebRTC transport
@@ -136,9 +136,8 @@ blocks its Clipboard API.
 The packaged defaults are 1280x720, 60 FPS, 6 Mbps CBR, and one-second GOP.
 Override the service with `systemctl --user edit rkwebscr.service` when another
 resolution or bitrate is needed. `RKWEBSCR_CAPTURE_FPS` is the display-clock
-calibration knob; the ROCK 5B default is 64 to produce approximately 60 output
-frames per second. Mutter emits frames only when pixels change, with this value
-as its refresh-rate ceiling.
+calibration knob. Both clocks default to 60 Hz so capture, encoding, and display
+stay aligned. Mutter emits frames only when pixels change.
 
 Useful commands:
 
