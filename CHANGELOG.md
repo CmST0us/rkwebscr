@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 - 2026-08-29
+
+- Configure the `rkwebscr.local` hostname before Avahi starts so queries are
+  answered reliably.
+- Make the advertised URL available directly on standard HTTP port 80.
+
 ## 0.3.0 - 2026-08-29
 
 - Advertise `rkwebscr.local` and the `_rkwebscr._tcp`/`_http._tcp` services
