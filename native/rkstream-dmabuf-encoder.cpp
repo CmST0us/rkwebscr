@@ -428,12 +428,14 @@ void on_process(void *data) {
     }
 }
 
-const pw_stream_events stream_events = {
-    .version = PW_VERSION_STREAM_EVENTS,
-    .state_changed = on_state_changed,
-    .param_changed = on_param_changed,
-    .process = on_process,
-};
+const pw_stream_events stream_events = [] {
+    pw_stream_events events{};
+    events.version = PW_VERSION_STREAM_EVENTS;
+    events.state_changed = on_state_changed;
+    events.param_changed = on_param_changed;
+    events.process = on_process;
+    return events;
+}();
 
 int positive(const char *text, const char *name) {
     char *end = nullptr;
@@ -504,9 +506,11 @@ int main(int argc, char **argv) {
     uint8_t storage[1024];
     spa_pod_builder builder = SPA_POD_BUILDER_INIT(storage, sizeof(storage));
     spa_pod_frame object;
-    spa_rectangle size = SPA_RECTANGLE(state.width, state.height);
+    spa_rectangle size = SPA_RECTANGLE(static_cast<uint32_t>(state.width),
+                                       static_cast<uint32_t>(state.height));
     spa_fraction variable_rate = SPA_FRACTION(0, 1);
-    spa_fraction max_rate = SPA_FRACTION(state.capture_fps, 1);
+    spa_fraction max_rate =
+        SPA_FRACTION(static_cast<uint32_t>(state.capture_fps), 1);
     spa_pod_builder_push_object(&builder, &object, SPA_TYPE_OBJECT_Format,
                                 SPA_PARAM_EnumFormat);
     spa_pod_builder_add(&builder,

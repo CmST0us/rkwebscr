@@ -40,11 +40,12 @@ binary-arch: build-arch
 	install -m 0644 udev/99-rkstream-rockchip.rules $(PACKAGE_DIR)/usr/lib/udev/rules.d/
 	install -m 0644 README.md LICENSE $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/
 	gzip -9nc debian/changelog > $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
-	dpkg-shlibdeps -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/libexec/rkstream/rkstream-dmabuf-encoder
+	chmod 0644 $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
+	$(DEB_HOST_GNU_TYPE)-strip --strip-unneeded $(PACKAGE_DIR)/usr/libexec/rkstream/rkstream-dmabuf-encoder
+	dpkg-shlibdeps --ignore-missing-info -xrockchip-mpp -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/libexec/rkstream/rkstream-dmabuf-encoder
 	dpkg-gencontrol -p$(PACKAGE) -P$(PACKAGE_DIR) -Tdebian/$(PACKAGE).substvars
 	cp debian/postinst $(PACKAGE_DIR)/DEBIAN/postinst
 	chmod 0755 $(PACKAGE_DIR)/DEBIAN/postinst
 	dpkg-deb --build --root-owner-group $(PACKAGE_DIR) $(DEB_FILE)
 
 binary-indep:
-

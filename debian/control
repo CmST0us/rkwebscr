@@ -1,7 +1,7 @@
 Source: rkstream
 Section: net
 Priority: optional
-Maintainer: rkstream contributors <rkstream@example.invalid>
+Maintainer: Eric Wu <eric3u@outlook.com>
 Build-Depends: dpkg-dev,
  g++,
  make,
@@ -16,8 +16,8 @@ Rules-Requires-Root: no
 
 Package: rkstream
 Architecture: any
-Depends: ${misc:Depends},
- ${shlibs:Depends},
+Depends: ${shlibs:Depends},
+ rockchip-mpp,
  python3,
  python3-gi,
  gir1.2-gstreamer-1.0,
@@ -33,4 +33,3 @@ Description: low-latency GNOME streaming for Rockchip
  rkstream creates a headless GNOME Wayland display and streams it to a web
  browser over WebRTC. Video capture uses DMA-BUF and Rockchip MPP H.264
  hardware encoding; audio is encoded as Opus.
-
