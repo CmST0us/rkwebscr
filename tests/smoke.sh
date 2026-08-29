@@ -69,6 +69,10 @@ grep -q 'wl-copy' server/rkwebscrd.py
 grep -q 'stderr=subprocess.DEVNULL' server/rkwebscrd.py
 grep -q 'clipboardDialog' web/app.js
 grep -q 'clipboardDialog' web/index.html
+grep -q 'requestVideoFrameCallback' web/app.js
+grep -q 'createImageBitmap(video)' web/app.js
+grep -q 'jitterBufferTarget = 100' web/app.js
+grep -q 'remoteCanvas' web/index.html
 test -f LICENSE
 test -f CHANGELOG.md
 test -f CONTRIBUTING.md

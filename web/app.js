@@ -5,6 +5,7 @@ const elements = {
   toolbar: $(".toolbar"),
   viewport: $("#viewport"),
   video: $("#remoteVideo"),
+  canvas: $("#remoteCanvas"),
   overlay: $("#connectOverlay"),
   connectButton: $("#connectButton"),
   connectMessage: $("#connectMessage"),
@@ -65,6 +66,7 @@ let keyboardCapture = true;
 let metricsTimer = null;
 let lastStats = null;
 let moveFrame = 0;
+let frameSmoother = null;
 let pendingMove = { dx: 0, dy: 0 };
 const downKeys = new Set();
 
@@ -107,9 +109,14 @@ async function connect() {
     stream = new MediaStream();
     elements.video.srcObject = stream;
 
-    peer.ontrack = ({ track }) => {
+    peer.ontrack = ({ track, receiver }) => {
       stream.addTrack(track);
-      elements.video.play().catch(() => {});
+      if (track.kind === "video" && "jitterBufferTarget" in receiver) {
+        try { receiver.jitterBufferTarget = 100; } catch {}
+      }
+      elements.video.play().then(() => {
+        if (track.kind === "video") startFrameSmoother();
+      }).catch(() => {});
     };
     peer.ondatachannel = ({ channel }) => attachControl(channel);
     peer.onconnectionstatechange = updateConnectionState;
@@ -215,6 +222,7 @@ function updateConnectionState() {
 }
 
 function closePeer() {
+  stopFrameSmoother();
   releaseKeys();
   if (document.pointerLockElement) document.exitPointerLock();
   if (metricsTimer) clearInterval(metricsTimer);
@@ -227,6 +235,77 @@ function closePeer() {
   stream = null;
   elements.video.srcObject = null;
   elements.toolbar.classList.remove("is-online");
+}
+
+function startFrameSmoother() {
+  stopFrameSmoother();
+  const video = elements.video;
+  if (!video.videoWidth || !video.requestVideoFrameCallback || typeof createImageBitmap !== "function") return;
+
+  const state = { active: true, capture: 0, render: 0, sequence: 0, next: 0, frames: [], ready: new Map(), last: null };
+  frameSmoother = state;
+  elements.canvas.width = video.videoWidth;
+  elements.canvas.height = video.videoHeight;
+  const context = elements.canvas.getContext("2d", { alpha: false });
+
+  const flush = () => {
+    while (state.ready.has(state.next)) {
+      state.frames.push(state.ready.get(state.next));
+      state.ready.delete(state.next++);
+      if (state.frames.length > 10) state.frames.shift().close();
+    }
+  };
+  const capture = () => {
+    if (!state.active) return;
+    const sequence = state.sequence++;
+    state.capture = video.requestVideoFrameCallback(capture);
+    createImageBitmap(video).then((frame) => {
+      if (!state.active) return frame.close();
+      state.ready.set(sequence, frame);
+      flush();
+    }).catch(stopFrameSmoother);
+  };
+  state.capture = video.requestVideoFrameCallback(capture);
+
+  const samples = [];
+  const sampleRefresh = (now) => {
+    if (!state.active) return;
+    samples.push(now);
+    if (samples.length < 61) {
+      state.render = requestAnimationFrame(sampleRefresh);
+      return;
+    }
+    const intervals = samples.slice(1).map((time, index) => time - samples[index]).sort((a, b) => a - b);
+    const refresh = intervals[Math.floor(intervals.length / 2)];
+    const divisor = Math.max(1, Math.round((1000 / status.video.fps) / refresh));
+    while (state.frames.length > 6) state.frames.shift().close();
+    let tick = 0;
+    const render = () => {
+      if (!state.active) return;
+      if ((tick++ % divisor) === 0 && state.frames.length) {
+        state.last?.close();
+        state.last = state.frames.shift();
+        context.drawImage(state.last, 0, 0);
+        elements.viewport.classList.add("is-smoothed");
+      }
+      state.render = requestAnimationFrame(render);
+    };
+    state.render = requestAnimationFrame(render);
+  };
+  state.render = requestAnimationFrame(sampleRefresh);
+}
+
+function stopFrameSmoother() {
+  const state = frameSmoother;
+  if (!state) return;
+  frameSmoother = null;
+  state.active = false;
+  elements.video.cancelVideoFrameCallback?.(state.capture);
+  cancelAnimationFrame(state.render);
+  state.frames.forEach((frame) => frame.close());
+  state.ready.forEach((frame) => frame.close());
+  state.last?.close();
+  elements.viewport.classList.remove("is-smoothed");
 }
 
 function disconnect() {
@@ -260,7 +339,8 @@ function scheduleRelativeMove(dx, dy) {
 
 function remoteCoordinates(event) {
   if (!status || !elements.video.videoWidth) return null;
-  const box = elements.video.getBoundingClientRect();
+  const surface = elements.viewport.classList.contains("is-smoothed") ? elements.canvas : elements.video;
+  const box = surface.getBoundingClientRect();
   const remoteRatio = status.video.width / status.video.height;
   const boxRatio = box.width / box.height;
   const width = boxRatio > remoteRatio ? box.height * remoteRatio : box.width;

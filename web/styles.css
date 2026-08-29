@@ -87,8 +87,11 @@ button { font: 500 14px/1 system-ui, sans-serif; }
   outline: none;
 }
 
-.viewport video { display: block; width: 100%; height: 100%; object-fit: contain; background: #050607; }
-.viewport.original video { width: auto; height: auto; max-width: none; max-height: none; }
+.viewport video, .viewport canvas { display: block; width: 100%; height: 100%; object-fit: contain; background: #050607; }
+.viewport canvas { display: none; }
+.viewport.is-smoothed video { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.viewport.is-smoothed canvas { display: block; }
+.viewport.original video, .viewport.original canvas { width: auto; height: auto; max-width: none; max-height: none; }
 .viewport:focus-visible { box-shadow: inset 0 0 0 2px var(--blue); }
 
 .connect-overlay {
