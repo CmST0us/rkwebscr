@@ -133,7 +133,7 @@ blocks its Clipboard API.
 
 ## Configuration
 
-The packaged defaults are 1024x576, 60 FPS, 6 Mbps CBR, and one-second GOP.
+The packaged defaults are 1280x720, 60 FPS, 6 Mbps CBR, and one-second GOP.
 Override the service with `systemctl --user edit rkwebscr.service` when another
 resolution or bitrate is needed. `RKWEBSCR_CAPTURE_FPS` is the display-clock
 calibration knob; the ROCK 5B default is 64 to produce approximately 60 output
