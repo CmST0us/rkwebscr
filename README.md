@@ -113,26 +113,18 @@ On the same LAN, open `http://rkwebscr.local/`; Avahi also advertises
 `_rkwebscr._tcp` and `_http._tcp`. If another device already owns the same
 mDNS name, Avahi may add a numeric suffix to avoid a collision.
 
-To carry both signaling and WebRTC media over an ADB USB connection, forward
-the HTTP and fixed ICE-TCP ports, then use the loopback URL:
-
-```bash
-adb forward tcp:8080 tcp:8080
-adb forward tcp:8090 tcp:8090
-```
-
-Open `http://127.0.0.1:8080/`. The loopback URL selects USB ICE-TCP; the normal
-`rkwebscr.local` URL continues to use low-latency LAN UDP.
-
-For USB instead of LAN transport:
+For USB instead of LAN transport, forward both HTTP signaling and the fixed
+ICE-TCP media port:
 
 ```bash
 adb forward tcp:18080 tcp:8080
+adb forward tcp:8090 tcp:8090
 ```
 
-Then open `http://127.0.0.1:18080/` in Chrome. WebRTC media is DTLS-SRTP
-encrypted, but the HTTP control endpoint has no authentication. Run it only on
-a trusted LAN or behind an ADB or SSH tunnel.
+Then open `http://127.0.0.1:18080/` in Chrome. The loopback URL selects USB
+ICE-TCP; `rkwebscr.local` continues to use low-latency LAN UDP. WebRTC media is
+DTLS-SRTP encrypted, but the HTTP control endpoint has no authentication. Run
+it only on a trusted LAN or behind an ADB or SSH tunnel.
 
 Use the clipboard button in the toolbar to transfer text in either direction.
 On localhost the browser can usually read and write the local clipboard
