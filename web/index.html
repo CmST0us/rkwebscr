@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111315" />
+    <title>Rock5B Remote</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="toolbar">
+        <div class="identity">
+          <strong id="deviceName">Rock5B</strong>
+          <span class="online-dot" aria-hidden="true"></span>
+          <span id="connectionLabel" class="connection-label">连接中</span>
+        </div>
+
+        <div class="metrics" aria-label="串流状态">
+          <span id="resolutionMetric">1080p</span>
+          <span id="fpsMetric">— FPS</span>
+          <span id="bitrateMetric">— Mbps</span>
+          <span id="latencyMetric">— ms</span>
+        </div>
+
+        <nav class="toolbar-actions" aria-label="远程控制工具">
+          <button id="fullscreenButton" class="icon-button" type="button" aria-label="全屏" title="全屏">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" /></svg>
+          </button>
+          <button id="fitButton" class="icon-button is-active" type="button" aria-label="适应窗口" title="适应窗口">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4M9 9h6v6H9z" /></svg>
+          </button>
+          <button id="audioButton" class="icon-button" type="button" aria-label="静音" title="静音">
+            <svg class="audio-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5zM17 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12" /></svg>
+            <svg class="audio-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5zM18 9l4 4M22 9l-4 4" /></svg>
+          </button>
+          <button id="keyboardButton" class="icon-button is-active" type="button" aria-label="捕获键盘" title="捕获键盘">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v10H4zM7 10h.01M10 10h.01M13 10h.01M16 10h.01M7 13h.01M10 13h.01M13 13h.01M16 13h.01M8 16h8" /></svg>
+          </button>
+          <button id="disconnectButton" class="icon-button danger" type="button" aria-label="断开连接" title="断开连接">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M8 8a5.5 5.5 0 0 0 0 8M16 8a5.5 5.5 0 0 1 0 8" /></svg>
+          </button>
+          <button id="settingsButton" class="icon-button" type="button" aria-expanded="true" aria-controls="connectionDrawer" aria-label="连接信息" title="连接信息">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4.9 9.2 3.4 7.7l2.3-2.3 1.5 1.5A8 8 0 0 1 10 5.7V3.5h4v2.2a8 8 0 0 1 2.8 1.2l1.5-1.5 2.3 2.3-1.5 1.5a8 8 0 0 1 1.2 2.8h2.2v4h-2.2a8 8 0 0 1-1.2 2.8l1.5 1.5-2.3 2.3-1.5-1.5a8 8 0 0 1-2.8 1.2v2.2h-4v-2.2a8 8 0 0 1-2.8-1.2l-1.5 1.5-2.3-2.3 1.5-1.5A8 8 0 0 1 3.7 16H1.5v-4h2.2a8 8 0 0 1 1.2-2.8z" /></svg>
+          </button>
+        </nav>
+      </header>
+
+      <section id="viewport" class="viewport" tabindex="0" aria-label="远程桌面画面">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div id="connectOverlay" class="connect-overlay">
+          <div class="connect-panel">
+            <div class="connect-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 12h10M13 8l4 4-4 4" /></svg>
+            </div>
+            <h1>连接 Rock5B</h1>
+            <p id="connectMessage">准备建立 WebRTC 串流</p>
+            <button id="connectButton" type="button">开始连接</button>
+          </div>
+        </div>
+
+        <aside id="connectionDrawer" class="connection-drawer" aria-label="连接信息">
+          <div class="drawer-heading">
+            <h2>连接信息</h2>
+            <button id="closeDrawerButton" type="button" aria-label="关闭连接信息">×</button>
+          </div>
+          <dl class="codec-list">
+            <div><dt>视频编码</dt><dd>H.264 (MPP)</dd></div>
+            <div><dt>传输协议</dt><dd>WebRTC</dd></div>
+            <div><dt>音频编码</dt><dd>Opus 48 kHz</dd></div>
+          </dl>
+          <h3>延迟监控</h3>
+          <dl class="latency-list">
+            <div><dt>Capture</dt><dd id="captureLatency">—</dd></div>
+            <div><dt>Encode</dt><dd id="encodeLatency">—</dd></div>
+            <div><dt>Network</dt><dd id="networkLatency">—</dd></div>
+            <div><dt>Decode</dt><dd id="decodeLatency">—</dd></div>
+          </dl>
+        </aside>
+      </section>
+
+      <footer id="controlHint">点击画面以捕获键盘和鼠标 · Esc 释放</footer>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

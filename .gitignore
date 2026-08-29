@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+native/rkstream-dmabuf-encoder
+debian/.debhelper/
+debian/files
+debian/rkstream/
+debian/rkstream.substvars
+*.buildinfo
+*.changes
+*.deb
+*.dsc
+*.tar.*
+

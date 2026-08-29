@@ -1,0 +1,15 @@
+[Unit]
+Description=Headless GNOME Shell for rkstream
+
+[Service]
+Type=simple
+Environment=XDG_SESSION_TYPE=wayland
+Environment=XDG_CURRENT_DESKTOP=ubuntu:GNOME
+Environment=XDG_SESSION_DESKTOP=ubuntu
+Environment=XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
+ExecStart=/usr/bin/gnome-shell --headless --wayland
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
