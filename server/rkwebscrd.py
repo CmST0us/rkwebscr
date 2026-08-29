@@ -837,7 +837,7 @@ class NativeEncoder:
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    server_version = "rkwebscr/0.3.5"
+    server_version = "rkwebscr/0.3.6"
 
     @property
     def app(self) -> "Application":

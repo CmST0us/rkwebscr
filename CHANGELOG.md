@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.6 - 2026-08-29
+
+- Carry WebRTC media over ADB-forwarded ICE-TCP when the page is opened on
+  localhost, while preserving normal LAN WebRTC behavior.
+- Keep RK3588 CPU, GPU, and memory clocks stable for smooth 60 FPS rendering.
+
 ## 0.3.5 - 2026-08-29
 
 - Force an H.264 IDR frame when a browser viewer connects, including on a
