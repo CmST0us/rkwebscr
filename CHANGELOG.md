@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 - 2026-08-29
+
+- Match the headless desktop to the standard Ubuntu GNOME session, including
+  Yaru Shell and the default Ubuntu extensions.
+
 ## 0.2.0 - 2026-08-29
 
 - Add bidirectional text clipboard transfer between the browser and GNOME.

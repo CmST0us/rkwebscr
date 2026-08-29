@@ -13,10 +13,13 @@ Environment=RKWEBSCR_CAPTURE_FPS=64
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=DISPLAY=:0
 Environment=XDG_SESSION_TYPE=wayland
-Environment=XDG_CURRENT_DESKTOP=GNOME
-Environment=XDG_SESSION_DESKTOP=gnome
+Environment=XDG_CURRENT_DESKTOP=ubuntu:GNOME
+Environment=XDG_SESSION_DESKTOP=ubuntu
+Environment=DESKTOP_SESSION=ubuntu
+Environment=GNOME_SHELL_SESSION_MODE=ubuntu
+Environment=XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
 ExecStartPre=/bin/sh -c 'for i in $(seq 1 50); do test -S %t/wayland-0 && exit 0; sleep .1; done; exit 1'
-ExecStartPre=/usr/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
+ExecStartPre=/usr/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP DESKTOP_SESSION GNOME_SHELL_SESSION_MODE XDG_CONFIG_DIRS
 ExecStart=/usr/bin/rkwebscrd --bind 0.0.0.0 --port 8080 --width 1280 --height 720 --fps 60 --bitrate 6000000
 Restart=on-failure
 RestartSec=2

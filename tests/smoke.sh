@@ -15,9 +15,11 @@ grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
 grep -q 'RKWEBSCR_CAPTURE_FPS=64' systemd/rkwebscr.service
 grep -q '/usr/bin/rkwebscrd' systemd/rkwebscr.service
 grep -q 'RTCPeerConnection' web/app.js
-grep -q -- '--headless --wayland' systemd/rkwebscr-headless.service
+grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.service
+grep -q 'GNOME_SHELL_SESSION_MODE=ubuntu' systemd/rkwebscr-headless.service
+grep -q 'XDG_CURRENT_DESKTOP=ubuntu:GNOME' systemd/rkwebscr.service
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.2.0)' debian/changelog
+grep -q '^rkwebscr (0.2.1)' debian/changelog
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
@@ -30,6 +32,7 @@ if grep -R -E -q 'Authorization|token-file|load_token' server web scripts; then
 fi
 grep -q 'rockchip-mpp-dev' debian/control
 grep -q 'wl-clipboard' debian/control
+grep -q 'ubuntu-session' debian/control
 grep -q 'clipboard-set' server/rkwebscrd.py
 grep -q 'wl-copy' server/rkwebscrd.py
 grep -q 'stderr=subprocess.DEVNULL' server/rkwebscrd.py

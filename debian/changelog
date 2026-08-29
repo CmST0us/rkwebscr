@@ -1,3 +1,10 @@
+rkwebscr (0.2.1) unstable; urgency=medium
+
+  * Run the headless shell in Ubuntu session mode with Ubuntu extensions.
+  * Export Ubuntu desktop identity to D-Bus activated applications.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 12:30:00 +0800
+
 rkwebscr (0.2.0) unstable; urgency=medium
 
   * Add bidirectional text clipboard transfer over the WebRTC data channel.

@@ -29,8 +29,12 @@ Depends: ${shlibs:Depends},
  gstreamer1.0-nice,
  libei1,
  wl-clipboard,
- gnome-shell
+ ubuntu-session,
+ gnome-shell-extension-ubuntu-dock,
+ gnome-shell-extension-appindicator,
+ gnome-shell-extension-desktop-icons-ng,
+ gnome-shell-extension-ubuntu-tiling-assistant
 Description: low-latency GNOME streaming for Rockchip
- rkwebscr creates a headless GNOME Wayland display and streams it to a web
+ rkwebscr creates a headless Ubuntu GNOME Wayland display and streams it to a web
  browser over WebRTC. Video capture uses DMA-BUF and Rockchip MPP H.264
  hardware encoding; audio is encoded as Opus.
