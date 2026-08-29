@@ -18,6 +18,10 @@ grep -q 'RTCPeerConnection' web/app.js
 grep -q -- '--headless --wayland' systemd/rkstream-headless.service
 grep -q '^Package: rkstream' debian/control
 grep -q 'dpkg-deb --build' debian/rules
+grep -q 'rockchip-mpp-dev' debian/control
+test -f LICENSE
+test -f CHANGELOG.md
+test -f CONTRIBUTING.md
 sh -n scripts/rkstream-setup
 sh -n debian/postinst
 printf '%s\n' 'smoke checks passed'

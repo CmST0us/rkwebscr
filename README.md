@@ -1,76 +1,124 @@
 # rkstream
 
-GNOME Wayland remote control for one Chrome browser, tuned for Rockchip RK3588:
+Low-latency GNOME Wayland remote control for Rockchip RK3588 boards. rkstream
+creates a headless Mutter virtual monitor and streams it to one browser on the
+LAN. It is tested on Radxa ROCK 5B with Ubuntu 24.04 and GNOME 46.
 
-- Mutter `RecordVirtual` headless display
-- PipeWire screen and system-audio capture
+## Features
+
+- Mutter `RecordVirtual` headless display; HDMI is not required
+- PipeWire linear DMA-BUF capture
 - Rockchip MPP H.264 hardware encoding
-- Opus audio and WebRTC transport
-- keyboard, absolute mouse and pointer-lock relative mouse control
+- Opus system audio and WebRTC transport
+- Keyboard, absolute mouse, relative mouse, and wheel input through libei
+- Token-protected HTTP control API
 
-Video uses a native DMA-BUF bridge for capture and encoding. Python handles Mutter D-Bus, SDP exchange, input validation, and the embedded HTTP server; GStreamer handles WebRTC and audio.
+The hot video path is:
 
-## Device requirements
-
-Ubuntu 24.04 GNOME 46. No display, HDMI dummy plug, login screen, or pre-existing graphical session is required. The services run as the target desktop user, not as root.
-
-```bash
-sudo apt install python3-gi \
-  gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0 gir1.2-gst-plugins-bad-1.0 \
-  gstreamer1.0-pipewire gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
-  gstreamer1.0-nice libei1
+```text
+GNOME/Mutter -> PipeWire DMA-BUF -> GBM map -> libyuv NV12 -> MPP H.264 -> WebRTC -> browser
 ```
 
-The deployed bridge needs PipeWire, Mesa GBM, Rockchip MPP and their kernel drivers. Building it also needs their development headers plus libyuv:
+Python owns the Mutter D-Bus sessions, input validation, WebRTC negotiation,
+and HTTP server. The C++ bridge owns DMA-BUF capture, pixel conversion, and MPP
+encoding. GStreamer handles WebRTC RTP and Opus audio. The package does not
+replace or modify an existing GStreamer installation.
 
-```bash
-make -C native
+## Repository layout
+
+```text
+native/     DMA-BUF to Rockchip MPP encoder
+server/     GNOME, WebRTC, input, and HTTP service
+web/        Browser client
+systemd/    User services for headless GNOME and rkstream
+udev/       Rockchip media-device permissions
+scripts/    Post-install user setup
+debian/     Debian source-package metadata
+tests/      Fast repository checks
 ```
 
-The included device deployment uses a statically linked libyuv, so it does not replace or modify an existing GStreamer installation.
+## Build
 
-## Install on the Rock5B
-
-Copy this repository to `/opt/rkstream`, stop GNOME Remote Login so it does not create a competing virtual desktop, then install the media-device rule and user services:
+Install the build dependencies on the RK3588 target:
 
 ```bash
-sudo install -m 0644 deploy/99-rockchip-media.rules /etc/udev/rules.d/
-sudo udevadm control --reload-rules
-sudo udevadm trigger --subsystem-match=mpp_class --subsystem-match=misc --subsystem-match=dma_heap
-sudo systemctl disable --now gnome-remote-desktop.service
-systemctl --user disable --now gnome-remote-desktop.service || true
+sudo apt install build-essential dpkg-dev pkg-config \
+  libpipewire-0.3-dev libdrm-dev libgbm-dev libyuv-dev rockchip-mpp-dev
+```
 
-mkdir -p ~/.config/systemd/user
-cp deploy/rkstream.service deploy/rkstream-headless.service ~/.config/systemd/user/
+Build the native encoder and run the repository checks:
+
+```bash
+make
+make check
+```
+
+Build the Debian binary package:
+
+```bash
+make deb
+```
+
+`dpkg-buildpackage` writes `rkstream_0.1.0_<architecture>.deb` to the parent
+directory, following normal Debian source-package conventions.
+
+## Install
+
+Install the package and enable lingering for the desktop user:
+
+```bash
+sudo apt install ../rkstream_0.1.0_arm64.deb
+sudo usermod -aG video "$USER"
 sudo loginctl enable-linger "$USER"
-systemctl --user daemon-reload
-systemctl --user enable --now rkstream-headless.service rkstream.service
 ```
 
-Read the token and open the resulting URL from Chrome:
+Log out and back in after changing group membership. GNOME Remote Desktop must
+not create a competing virtual monitor; disable it for the same user if it is
+enabled:
 
 ```bash
-TOKEN=$(cat ~/.config/rkstream/token)
-printf 'http://ROCK5B_IP:8080/?token=%s\n' "$TOKEN"
+systemctl --user disable --now gnome-remote-desktop.service
 ```
 
-WebRTC media is DTLS-SRTP encrypted. The current HTTP control endpoint is intended for a trusted LAN; use an SSH tunnel when the LAN is not trusted.
-
-## Development run
+Start rkstream as the desktop user:
 
 ```bash
-export XDG_RUNTIME_DIR=/run/user/$(id -u)
-export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
-export GST_REGISTRY=$XDG_RUNTIME_DIR/rkstream-gstreamer-registry.bin
-python3 server/rkstreamd.py --web-root "$PWD/web" --verbose
+rkstream-setup
 ```
 
-The first click connects and permits Chrome to play audio. Clicking the remote frame captures the pointer; `Esc` releases it.
+The command enables both user services and prints the tokenized LAN URL. The
+token is stored with mode `0600` in `~/.config/rkstream/token`.
 
-## Checks
+For USB instead of LAN transport:
 
 ```bash
-sh tests/smoke.sh
+adb forward tcp:18080 tcp:8080
 ```
 
-The latency-first settings are 720p60, 6 Mbps CBR, a one-second GOP, three pending MPP frames and 10 ms Opus frames. Mutter is sampled at a calibrated 64 Hz because this headless RK3588 setup runs about 5% below its requested PipeWire maximum; MPP and WebRTC remain 60 FPS. `RKSTREAM_CAPTURE_FPS` is the calibration knob for other boards.
+Then open `http://127.0.0.1:18080/?token=TOKEN` in Chrome. WebRTC media is
+DTLS-SRTP encrypted. The HTTP endpoint is intended for a trusted LAN or an ADB
+or SSH tunnel.
+
+## Configuration
+
+The packaged defaults are 1280x720, 60 FPS, 6 Mbps CBR, and one-second GOP.
+Override the service with `systemctl --user edit rkstream.service` when another
+resolution or bitrate is needed. `RKSTREAM_CAPTURE_FPS` is the hardware
+calibration knob; the ROCK 5B default is 64 to produce approximately 60 output
+frames per second.
+
+Useful commands:
+
+```bash
+systemctl --user status rkstream-headless.service rkstream.service
+journalctl --user -u rkstream.service -f
+systemctl --user restart rkstream.service
+```
+
+A black but connected stream can simply be an empty headless workspace. Launch
+an application on `WAYLAND_DISPLAY=wayland-0` to distinguish that from a video
+failure. Encoder logs should report frames with zero `dropped` and `failed`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
