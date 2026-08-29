@@ -17,9 +17,10 @@ grep -q 'USB_ICE_PORT = 8090' server/rkwebscrd.py
 grep -q 'X-Rkwebscr-Transport' web/app.js
 grep -q 'opusenc' server/rkwebscrd.py
 grep -q 'rtpopusdepay' server/rkwebscrd.py
-grep -q 'mode=provide' server/rkwebscrd.py
 grep -q 'rkwebscr_microphone' server/rkwebscrd.py
 grep -q 'rkwebscr_output' server/rkwebscrd.py
+grep -q 'pw-loopback' server/rkwebscrd.py
+grep -q 'target-object=rkwebscr_mic_sink' server/rkwebscrd.py
 grep -q 'interaudiosrc channel=rkwebscr' server/rkwebscrd.py
 grep -q 'audioTransceiver.direction = "sendrecv"' web/app.js
 grep -q 'ConnectToEIS' server/rkwebscrd.py

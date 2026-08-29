@@ -496,7 +496,6 @@ class WebRTCSession:
         self.screen: Gst.Element | None = None
         self.microphone: Gst.Bin | None = None
         self.control = None
-        self._previous_audio_source: str | None = None
         self._frame_duration = Gst.SECOND // app.config.fps
         self._last_frame_ns = 0
         self._next_pts = 0
@@ -607,8 +606,6 @@ class WebRTCSession:
     def close(self) -> None:
         if self.pipeline:
             self.pipeline.set_state(Gst.State.NULL)
-        if self._previous_audio_source:
-            set_pipewire_default("source", self._previous_audio_source)
         self.pipeline = None
         self.webrtc = None
         self.nice_agent = None
@@ -623,38 +620,30 @@ class WebRTCSession:
             return
         if caps.get_structure(0).get_string("media") != "audio":
             return
-        self._previous_audio_source = pipewire_default_node("@DEFAULT_AUDIO_SOURCE@")
         microphone = Gst.parse_bin_from_description(
             "queue max-size-buffers=16 max-size-bytes=0 max-size-time=200000000 ! "
             "rtpopusdepay ! opusdec plc=true ! audioconvert ! audioresample ! "
             "audio/x-raw,rate=48000,channels=1 ! "
-            "pipewiresink name=microphone mode=provide sync=false async=false",
+            "pipewiresink name=microphone target-object=rkwebscr_mic_sink "
+            "sync=false async=false",
             True,
         )
         sink = microphone.get_by_name("microphone")
         sink.set_property("client-name", "rkwebscr-microphone")
-        props = Gst.Structure.new_empty("props")
-        props.set_value("media.class", "Audio/Source")
-        props.set_value("media.role", "Communication")
-        props.set_value("node.name", "rkwebscr_microphone")
-        props.set_value("node.description", "rkwebscr Microphone")
-        sink.set_property("stream-properties", props)
         self.pipeline.add(microphone)
         sink_pad = microphone.get_static_pad("sink")
         result = pad.link(sink_pad)
-        if result != Gst.PadLinkReturn.OK or not microphone.sync_state_with_parent():
-            pad.unlink(sink_pad)
+        if result != Gst.PadLinkReturn.OK:
             self.pipeline.remove(microphone)
             LOG.error("Could not connect browser microphone: %s", result)
             return
+        if not microphone.sync_state_with_parent():
+            pad.unlink(sink_pad)
+            self.pipeline.remove(microphone)
+            LOG.error("Could not start the browser microphone pipeline")
+            return
         self.microphone = microphone
-        GLib.timeout_add(250, self._make_microphone_default)
-        LOG.info("Browser microphone is available as rkwebscr_microphone")
-
-    def _make_microphone_default(self) -> bool:
-        if self.microphone:
-            set_pipewire_default("source", "rkwebscr_microphone")
-        return GLib.SOURCE_REMOVE
+        LOG.info("Browser microphone is connected to rkwebscr_microphone")
 
     def create_offer(self, timeout: float = 12.0) -> str:
         if not self.webrtc:
@@ -981,13 +970,17 @@ class Application:
         self.webrtc: WebRTCSession | None = None
         self.encoder: NativeEncoder | None = None
         self.audio_output: Gst.Pipeline | None = None
+        self.microphone_loopback: subprocess.Popen | None = None
         self.httpd: ThreadingHTTPServer | None = None
         self._node_id: int | None = None
         self._previous_audio_sink: str | None = None
+        self._previous_audio_source: str | None = None
 
     def start(self) -> None:
         if self.config.audio and not self.config.audio_target:
             self._start_audio_output()
+        if self.config.audio:
+            self._start_microphone_loopback()
         self.httpd = ThreadingHTTPServer(
             (self.config.bind, self.config.port), RequestHandler
         )
@@ -1006,8 +999,16 @@ class Application:
         self.mutter.stop()
         if self.audio_output:
             self.audio_output.set_state(Gst.State.NULL)
+        if self.microphone_loopback and self.microphone_loopback.poll() is None:
+            self.microphone_loopback.terminate()
+            try:
+                self.microphone_loopback.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                self.microphone_loopback.kill()
         if self._previous_audio_sink:
             set_pipewire_default("sink", self._previous_audio_sink)
+        if self._previous_audio_source:
+            set_pipewire_default("source", self._previous_audio_source)
 
     def _start_audio_output(self) -> None:
         self._previous_audio_sink = pipewire_default_node("@DEFAULT_AUDIO_SINK@")
@@ -1029,9 +1030,36 @@ class Application:
             raise RuntimeError("Could not create the PipeWire audio output")
         GLib.timeout_add(250, self._make_audio_output_default)
 
+    def _start_microphone_loopback(self) -> None:
+        self._previous_audio_source = pipewire_default_node("@DEFAULT_AUDIO_SOURCE@")
+        self.microphone_loopback = subprocess.Popen(
+            [
+                "pw-loopback",
+                "--name",
+                "rkwebscr-microphone-loopback",
+                "--latency",
+                "20",
+                "--capture-props",
+                "media.class=Audio/Sink node.name=rkwebscr_mic_sink "
+                "node.description=rkwebscr_Microphone_Input",
+                "--playback-props",
+                "media.class=Audio/Source node.name=rkwebscr_microphone "
+                "node.description=rkwebscr_Microphone",
+            ],
+            stdout=subprocess.DEVNULL,
+        )
+        GLib.timeout_add(250, self._make_microphone_default)
+
     def _make_audio_output_default(self) -> bool:
         if self.audio_output:
             set_pipewire_default("sink", "rkwebscr_output")
+        return GLib.SOURCE_REMOVE
+
+    def _make_microphone_default(self) -> bool:
+        if self.microphone_loopback and self.microphone_loopback.poll() is None:
+            set_pipewire_default("source", "rkwebscr_microphone")
+        else:
+            LOG.error("PipeWire microphone loopback stopped")
         return GLib.SOURCE_REMOVE
 
     def _on_pipewire_node(self, node_id: int) -> None:
