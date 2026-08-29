@@ -1041,10 +1041,10 @@ class Application:
                 "20",
                 "--capture-props",
                 "media.class=Audio/Sink node.name=rkwebscr_mic_sink "
-                "node.description=rkwebscr_Microphone_Input",
+                'node.description="rkwebscr Microphone Input"',
                 "--playback-props",
                 "media.class=Audio/Source node.name=rkwebscr_microphone "
-                "node.description=rkwebscr_Microphone",
+                'node.description="rkwebscr Microphone"',
             ],
             stdout=subprocess.DEVNULL,
         )
