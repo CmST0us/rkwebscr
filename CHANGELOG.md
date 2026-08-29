@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.5 - 2026-08-29
+
+- Force an H.264 IDR frame when a browser viewer connects, including on a
+  static GNOME desktop.
+
 ## 0.3.4 - 2026-08-29
 
 - Pace encoded frames on a 60 Hz clock before WebRTC packetization.

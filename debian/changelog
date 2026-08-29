@@ -1,3 +1,10 @@
+rkwebscr (0.3.5) unstable; urgency=medium
+
+  * Force an H.264 IDR frame when a browser viewer connects.
+  * Trigger one static-desktop frame so a new viewer renders immediately.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 15:05:00 +0800
+
 rkwebscr (0.3.4) unstable; urgency=medium
 
   * Pace encoded frames on a 60 Hz clock before WebRTC packetization.
