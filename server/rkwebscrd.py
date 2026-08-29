@@ -866,7 +866,7 @@ def load_token(path: Path) -> str:
 def parse_args():
     root = Path(__file__).resolve().parents[1]
     installed_web = Path("/usr/share/rkwebscr/web")
-    installed_encoder = Path("/usr/libexec/rkwebscr/rkwebscr-dmabuf-encoder")
+    installed_encoder = Path("/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder")
     parser = argparse.ArgumentParser()
     parser.add_argument("--bind", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)

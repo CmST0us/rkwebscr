@@ -17,7 +17,13 @@ grep -q '/usr/bin/rkwebscrd' systemd/rkwebscr.service
 grep -q 'RTCPeerConnection' web/app.js
 grep -q -- '--headless --wayland' systemd/rkwebscr-headless.service
 grep -q '^Package: rkwebscr' debian/control
+grep -q '^rkwebscr (0.1.1)' debian/changelog
 grep -q 'dpkg-deb --build' debian/rules
+grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
+if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
+  printf '%s\n' 'legacy libexec path found' >&2
+  exit 1
+fi
 grep -q 'rockchip-mpp-dev' debian/control
 test -f LICENSE
 test -f CHANGELOG.md

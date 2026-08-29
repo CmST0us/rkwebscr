@@ -59,15 +59,31 @@ Build the Debian binary package:
 make deb
 ```
 
-`dpkg-buildpackage` writes `rkwebscr_0.1.0_<architecture>.deb` to the parent
+`dpkg-buildpackage` writes `rkwebscr_0.1.1_<architecture>.deb` to the parent
 directory, following normal Debian source-package conventions.
+
+## Installed files
+
+The Debian package uses the standard Ubuntu filesystem layout:
+
+```text
+/usr/bin/rkwebscrd                              public service executable
+/usr/bin/rkwebscr-setup                         first-run user setup
+/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder       package-private native helper
+/usr/share/rkwebscr/web/                         architecture-independent web UI
+/usr/lib/systemd/user/rkwebscr.service           user service
+/usr/lib/systemd/user/rkwebscr-headless.service  headless GNOME user service
+/usr/lib/udev/rules.d/99-rkwebscr-rockchip.rules device permissions
+/usr/share/doc/rkwebscr/                         package documentation
+~/.config/rkwebscr/token                         per-user access token
+```
 
 ## Install
 
 Install the package and enable lingering for the desktop user:
 
 ```bash
-sudo apt install ../rkwebscr_0.1.0_arm64.deb
+sudo apt install ../rkwebscr_0.1.1_arm64.deb
 sudo usermod -aG video "$USER"
 sudo loginctl enable-linger "$USER"
 ```
@@ -118,6 +134,30 @@ systemctl --user restart rkwebscr.service
 A black but connected stream can simply be an empty headless workspace. Launch
 an application on `WAYLAND_DISPLAY=wayland-0` to distinguish that from a video
 failure. Encoder logs should report frames with zero `dropped` and `failed`.
+
+## Development and deployment
+
+Git is the source of truth. Do not copy individual files into `/opt`, `/usr`,
+or a user's systemd directory. Every device update follows this sequence:
+
+```bash
+# develop and commit in this repository
+make check
+
+# add a new top entry to debian/changelog, then build
+make deb
+
+# deploy only the resulting package
+adb push ../rkwebscr_VERSION_arm64.deb /data/local/tmp/
+adb shell 'apt install /data/local/tmp/rkwebscr_VERSION_arm64.deb'
+
+# reload and restart as the desktop user
+systemctl --user daemon-reload
+systemctl --user restart rkwebscr-headless.service rkwebscr.service
+```
+
+Run `rkwebscr-setup` only for the first installation. Commit the release state
+before building so the installed package can always be traced to Git.
 
 ## License
 

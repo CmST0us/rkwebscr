@@ -1,3 +1,10 @@
+rkwebscr (0.1.1) unstable; urgency=medium
+
+  * Use the Ubuntu package-private path under /usr/lib/rkwebscr.
+  * Document package-managed upgrades as the only deployment workflow.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 10:45:00 +0800
+
 rkwebscr (0.1.0) unstable; urgency=medium
 
   * Initial Debian package.
