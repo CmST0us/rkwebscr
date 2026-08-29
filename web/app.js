@@ -147,7 +147,10 @@ async function connect() {
     await peer.setRemoteDescription(offer);
     const microphoneTrack = microphoneStream?.getAudioTracks()[0];
     const audioTransceiver = peer.getTransceivers().find(({ receiver }) => receiver.track.kind === "audio");
-    if (microphoneTrack && audioTransceiver) await audioTransceiver.sender.replaceTrack(microphoneTrack);
+    if (microphoneTrack && audioTransceiver) {
+      audioTransceiver.direction = "sendrecv";
+      await audioTransceiver.sender.replaceTrack(microphoneTrack);
+    }
     const answer = await peer.createAnswer();
     await peer.setLocalDescription(answer);
     await waitForIceGathering(peer);

@@ -508,8 +508,15 @@ class WebRTCSession:
         c = self.app.config
         audio_branch = ""
         if c.audio:
-            audio_branch = """
-                pipewiresrc name=audio do-timestamp=true keepalive-time=10 min-buffers=2 max-buffers=8 !
+            audio_source = (
+                "pipewiresrc name=audio do-timestamp=true keepalive-time=10 "
+                "min-buffers=2 max-buffers=8"
+                if c.audio_target
+                else "interaudiosrc channel=rkwebscr do-timestamp=true "
+                "buffer-time=100000000 latency-time=20000000 period-time=10000000"
+            )
+            audio_branch = f"""
+                {audio_source} !
                   audio/x-raw,rate=48000,channels=2 !
                   queue leaky=downstream max-size-buffers=4 max-size-bytes=0 max-size-time=40000000 !
                   audioconvert ! audioresample !
@@ -558,13 +565,13 @@ class WebRTCSession:
                 raise RuntimeError(f"Could not link {output_name} to WebRTC: {result}")
         self.screen = self.pipeline.get_by_name("screen")
 
-        if c.audio:
+        if c.audio and c.audio_target:
             audio = self.pipeline.get_by_name("audio")
             audio.set_property("client-name", "rkwebscr-audio")
             props = Gst.Structure.new_empty("props")
             props.set_value("media.role", "Screen")
             props.set_value("stream.capture.sink", True)
-            audio.set_property("target-object", c.audio_target or "rkwebscr_output")
+            audio.set_property("target-object", c.audio_target)
             audio.set_property("stream-properties", props)
 
         self.webrtc.connect("notify::ice-gathering-state", self._on_ice_state)
@@ -1007,7 +1014,8 @@ class Application:
         self.audio_output = Gst.parse_launch(
             "pipewiresrc name=output autoconnect=false keepalive-time=10 "
             "min-buffers=2 max-buffers=8 ! "
-            "audio/x-raw,rate=48000,channels=2 ! fakesink sync=false"
+            "audio/x-raw,rate=48000,channels=2 ! "
+            "interaudiosink channel=rkwebscr sync=false"
         )
         output = self.audio_output.get_by_name("output")
         output.set_property("client-name", "rkwebscr-output")
