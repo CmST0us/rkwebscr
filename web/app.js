@@ -247,7 +247,7 @@ function startFrameSmoother() {
   const video = elements.video;
   if (!video.videoWidth || !video.requestVideoFrameCallback || typeof createImageBitmap !== "function") return;
 
-  const state = { active: true, capture: 0, render: 0, sequence: 0, next: 0, frames: [], ready: new Map(), last: null, held: false };
+  const state = { active: true, capture: 0, render: 0, sequence: 0, next: 0, frames: [], ready: new Map(), last: null, delayed: false };
   frameSmoother = state;
   elements.canvas.width = video.videoWidth;
   elements.canvas.height = video.videoHeight;
@@ -288,19 +288,23 @@ function startFrameSmoother() {
     const refresh = intervals[Math.floor(intervals.length / 2)];
     const divisor = Math.max(1, Math.round((1000 / status.video.fps) / refresh));
     while (state.frames.length > 6) state.frames.shift().close();
-    let tick = 0;
+    let wait = 0;
     const render = () => {
       if (!state.active) return;
-      if ((tick++ % divisor) === 0) {
-        if (state.frames.length && (state.held || state.frames.length > 2)) {
-          state.last?.close();
-          state.last = state.frames.shift();
-          context.drawImage(state.last, 0, 0);
-          elements.viewport.classList.add("is-smoothed");
-          state.held = false;
-        } else {
-          state.held = true;
-        }
+      if (wait > 0) {
+        wait -= 1;
+      } else if (!state.frames.length) {
+        state.delayed = true;
+      } else if (divisor > 1 && state.frames.length <= 2 && !state.delayed) {
+        state.delayed = true;
+      } else {
+        const catchUp = divisor > 1 && state.frames.length > 4;
+        state.last?.close();
+        state.last = state.frames.shift();
+        context.drawImage(state.last, 0, 0);
+        elements.viewport.classList.add("is-smoothed");
+        state.delayed = false;
+        wait = divisor - (catchUp ? 2 : 1);
       }
       state.render = requestAnimationFrame(render);
     };

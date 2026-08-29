@@ -72,6 +72,7 @@ grep -q 'clipboardDialog' web/index.html
 grep -q 'requestVideoFrameCallback' web/app.js
 grep -q 'createImageBitmap(video)' web/app.js
 grep -q 'jitterBufferTarget = 100' web/app.js
+grep -q 'const catchUp = divisor > 1 && state.frames.length > 4' web/app.js
 grep -q '1000 / (status?.video.fps || 60)' web/app.js
 grep -q 'moveTimer = setInterval' web/app.js
 grep -q 'remoteCanvas' web/index.html
