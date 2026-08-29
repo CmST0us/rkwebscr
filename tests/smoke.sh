@@ -23,6 +23,7 @@ grep -q 'len(self._frame_queue) >= 3' server/rkwebscrd.py
 grep -q 'RKWEBSCR_CAPTURE_FPS=64' systemd/rkwebscr.service
 grep -q 'RKWEBSCR_GPU_HZ=900000000' systemd-system/rkwebscr-performance.service
 grep -q 'RKWEBSCR_DMC_HZ=2112000000' systemd-system/rkwebscr-performance.service
+grep -q 'printf %%s' systemd-system/rkwebscr-performance.service
 grep -q 'enable --now rkwebscr-performance.service' debian/postinst
 grep -q 'disable --now rkwebscr-performance.service' debian/prerm
 grep -q 'SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&variable_rate)' native/rkwebscr-dmabuf-encoder.cpp
