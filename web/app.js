@@ -225,7 +225,7 @@ function updateConnectionState() {
 function closePeer() {
   stopFrameSmoother();
   releaseKeys();
-  if (moveTimer) clearTimeout(moveTimer);
+  if (moveTimer) clearInterval(moveTimer);
   moveTimer = 0;
   pendingMove = { dx: 0, dy: 0 };
   pendingPosition = null;
@@ -348,12 +348,17 @@ function scheduleRelativeMove(dx, dy) {
 
 function schedulePointerMove() {
   if (moveTimer) return;
-  moveTimer = setTimeout(() => {
-    moveTimer = 0;
-    if (pendingMove.dx || pendingMove.dy) send({ t: "m", ...pendingMove });
+  moveTimer = setInterval(() => {
+    const relative = pendingMove.dx || pendingMove.dy;
+    const absolute = pendingPosition;
+    if (relative) send({ t: "m", ...pendingMove });
     pendingMove = { dx: 0, dy: 0 };
-    if (pendingPosition) send({ t: "p", ...pendingPosition });
+    if (absolute) send({ t: "p", ...absolute });
     pendingPosition = null;
+    if (!relative && !absolute) {
+      clearInterval(moveTimer);
+      moveTimer = 0;
+    }
   }, 1000 / (status?.video.fps || 60));
 }
 
