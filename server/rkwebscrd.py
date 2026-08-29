@@ -31,6 +31,29 @@ from gi.repository import Gio, GLib, Gst, GstSdp, GstWebRTC
 LOG = logging.getLogger("rkwebscr")
 MUTTER_REMOTE_DESKTOP = "org.gnome.Mutter.RemoteDesktop"
 MUTTER_SCREEN_CAST = "org.gnome.Mutter.ScreenCast"
+USB_ICE_PORT = 8090
+
+
+def usb_sdp_offer(sdp: str) -> str:
+    lines = []
+    found = False
+    for line in sdp.splitlines():
+        if not line.startswith("a=candidate:"):
+            lines.append(line)
+            continue
+        fields = line.split()
+        if (
+            len(fields) >= 10
+            and fields[2].upper() == "TCP"
+            and ":" not in fields[4]
+            and fields[-2:] == ["tcptype", "passive"]
+        ):
+            fields[4:6] = ["127.0.0.1", str(USB_ICE_PORT)]
+            lines.append(" ".join(fields))
+            found = True
+    if not found:
+        raise RuntimeError("USB ICE-TCP candidate is unavailable")
+    return "\r\n".join(lines) + "\r\n"
 
 
 def proxy(name: str, path: str, interface: str) -> Gio.DBusProxy:
@@ -474,6 +497,10 @@ class WebRTCSession:
         """
         self.pipeline = Gst.parse_launch(desc)
         self.webrtc = self.pipeline.get_by_name("webrtc")
+        ice = self.webrtc.get_property("ice-agent")
+        ice.set_property("min-rtp-port", USB_ICE_PORT)
+        ice.set_property("max-rtp-port", USB_ICE_PORT)
+        ice.set_property("ice-tcp", True)
         self.video_gate = self.pipeline.get_by_name("video_gate")
         self.audio_gate = self.pipeline.get_by_name("audio_gate")
         output_names = ["video_out"] + (["audio_out"] if c.audio else [])
@@ -816,7 +843,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             if path == "/api/offer":
-                offer = self.app.create_offer()
+                usb = self.headers.get("X-Rkwebscr-Transport") == "usb"
+                offer = self.app.create_offer(usb)
                 return self._json(HTTPStatus.OK, {"type": "offer", "sdp": offer})
             if path == "/api/answer":
                 body = self._read_json()
@@ -939,13 +967,14 @@ class Application:
             "transport": "WebRTC",
         }
 
-    def create_offer(self) -> str:
+    def create_offer(self, usb: bool = False) -> str:
         if not self.webrtc:
             raise RuntimeError("Screen capture is still starting")
         if self.webrtc._offer_sdp is not None:
             self.webrtc.close()
             self.webrtc = WebRTCSession(self, self._node_id)
-        return self.webrtc.create_offer()
+        offer = self.webrtc.create_offer()
+        return usb_sdp_offer(offer) if usb else offer
 
     def set_answer(self, answer: str) -> None:
         if not self.webrtc:

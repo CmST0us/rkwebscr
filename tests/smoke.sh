@@ -13,6 +13,8 @@ grep -q 'encode_put_frame' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'superseded' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'MPP_ENC_SET_IDR_FRAME' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'send_signal(signal.SIGUSR1)' server/rkwebscrd.py
+grep -q 'USB_ICE_PORT = 8090' server/rkwebscrd.py
+grep -q 'X-Rkwebscr-Transport' web/app.js
 grep -q 'opusenc' server/rkwebscrd.py
 grep -q 'ConnectToEIS' server/rkwebscrd.py
 grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
@@ -67,4 +69,14 @@ sh -n scripts/rkwebscr-setup
 sh -n debian/postinst
 sh -n debian/prerm
 sh -n debian/postrm
+if python3 -c 'import gi' >/dev/null 2>&1; then
+  PYTHONPATH=. python3 - <<'PY'
+from server.rkwebscrd import usb_sdp_offer
+
+sdp = "v=0\r\na=candidate:1 1 UDP 1 192.168.1.2 5000 typ host\r\na=candidate:2 1 TCP 1 192.168.1.2 6000 typ host tcptype passive\r\n"
+offer = usb_sdp_offer(sdp)
+assert " UDP " not in offer
+assert " TCP 1 127.0.0.1 8090 typ host tcptype passive" in offer
+PY
+fi
 printf '%s\n' 'smoke checks passed'

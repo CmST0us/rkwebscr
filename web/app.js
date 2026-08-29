@@ -115,7 +115,12 @@ async function connect() {
     peer.onconnectionstatechange = updateConnectionState;
 
     elements.connectMessage.textContent = "正在协商 WebRTC";
-    const offer = await api("/api/offer", { method: "POST", body: "{}" });
+    const usb = ["127.0.0.1", "localhost", "[::1]"].includes(location.hostname);
+    const offer = await api("/api/offer", {
+      method: "POST",
+      body: "{}",
+      headers: usb ? { "X-Rkwebscr-Transport": "usb" } : {},
+    });
     await peer.setRemoteDescription(offer);
     const answer = await peer.createAnswer();
     await peer.setLocalDescription(answer);

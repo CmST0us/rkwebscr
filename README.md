@@ -113,6 +113,17 @@ On the same LAN, open `http://rkwebscr.local/`; Avahi also advertises
 `_rkwebscr._tcp` and `_http._tcp`. If another device already owns the same
 mDNS name, Avahi may add a numeric suffix to avoid a collision.
 
+To carry both signaling and WebRTC media over an ADB USB connection, forward
+the HTTP and fixed ICE-TCP ports, then use the loopback URL:
+
+```bash
+adb forward tcp:8080 tcp:8080
+adb forward tcp:8090 tcp:8090
+```
+
+Open `http://127.0.0.1:8080/`. The loopback URL selects USB ICE-TCP; the normal
+`rkwebscr.local` URL continues to use low-latency LAN UDP.
+
 For USB instead of LAN transport:
 
 ```bash
