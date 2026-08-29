@@ -1,3 +1,10 @@
+rkwebscr (0.3.4) unstable; urgency=medium
+
+  * Pace encoded frames on a 60 Hz clock before WebRTC packetization.
+  * Bound the pacing queue and apply backpressure without dropping H.264 frames.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 14:00:00 +0800
+
 rkwebscr (0.3.3) unstable; urgency=medium
 
   * Report browser frame cadence, jitter, drops, and freezes.

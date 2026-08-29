@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.4 - 2026-08-29
+
+- Pace encoded frames on a 60 Hz clock before WebRTC packetization.
+- Bound the pacing queue and apply backpressure without dropping dependent H.264
+  frames.
+
 ## 0.3.3 - 2026-08-29
 
 - Report browser frame cadence, jitter, dropped frames, and freezes in the
