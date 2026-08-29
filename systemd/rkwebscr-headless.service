@@ -9,7 +9,7 @@ Environment=XDG_SESSION_DESKTOP=ubuntu
 Environment=DESKTOP_SESSION=ubuntu
 Environment=GNOME_SHELL_SESSION_MODE=ubuntu
 Environment=XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
-ExecStart=/usr/bin/gnome-shell --headless --wayland --mode=ubuntu --virtual-monitor 1280x720@60
+ExecStart=/usr/bin/gnome-shell --headless --wayland --mode=ubuntu
 Restart=on-failure
 RestartSec=2
 

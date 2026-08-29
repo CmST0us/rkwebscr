@@ -353,10 +353,11 @@ class MutterSession:
 
         record_options = {
             "cursor-mode": GLib.Variant("u", 1),
+            "is-platform": GLib.Variant("b", True),
         }
         result = self.screen_session.call_sync(
-            "RecordMonitor",
-            GLib.Variant("(sa{sv})", ("", record_options)),
+            "RecordVirtual",
+            GLib.Variant("(a{sv})", (record_options,)),
             Gio.DBusCallFlags.NONE,
             -1,
             None,
@@ -369,7 +370,7 @@ class MutterSession:
         )
         self.stream.connect("g-signal", self._on_stream_signal)
         self.remote_session.connect("g-signal", self._on_remote_signal)
-        LOG.info("Mutter monitor stream created: %s", self.stream_path)
+        LOG.info("Mutter virtual stream created: %s", self.stream_path)
         self.stream.call(
             "Start",
             None,
