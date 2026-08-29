@@ -78,6 +78,7 @@ The Debian package uses the standard Ubuntu filesystem layout:
 /usr/lib/systemd/user/rkwebscr.service           user service
 /usr/lib/systemd/user/rkwebscr-headless.service  headless GNOME user service
 /usr/lib/systemd/system/avahi-daemon.service.d/  mDNS hostname configuration
+/usr/lib/systemd/system/rkwebscr-http.*           port 80 socket proxy
 /etc/avahi/services/rkwebscr.service             DNS-SD service description
 /usr/lib/udev/rules.d/99-rkwebscr-rockchip.rules device permissions
 /usr/share/doc/rkwebscr/                         package documentation
@@ -108,7 +109,7 @@ rkwebscr-setup
 ```
 
 The command enables both user services and prints the local and LAN URLs.
-On the same LAN, open `http://rkwebscr.local:8080/`; Avahi also advertises
+On the same LAN, open `http://rkwebscr.local/`; Avahi also advertises
 `_rkwebscr._tcp` and `_http._tcp`. If another device already owns the same
 mDNS name, Avahi may add a numeric suffix to avoid a collision.
 

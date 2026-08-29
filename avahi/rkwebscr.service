@@ -4,13 +4,13 @@
   <name>rkwebscr</name>
   <service>
     <type>_rkwebscr._tcp</type>
-    <port>8080</port>
+    <port>80</port>
     <txt-record>path=/</txt-record>
     <txt-record>transport=WebRTC</txt-record>
   </service>
   <service>
     <type>_http._tcp</type>
-    <port>8080</port>
+    <port>80</port>
     <txt-record>path=/</txt-record>
   </service>
 </service-group>

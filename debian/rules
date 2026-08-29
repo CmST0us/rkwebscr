@@ -39,6 +39,7 @@ binary-arch: build-arch
 	install -m 0755 scripts/rkwebscr-setup $(PACKAGE_DIR)/usr/bin/
 	install -m 0644 web/index.html web/app.js web/styles.css $(PACKAGE_DIR)/usr/share/rkwebscr/web/
 	install -m 0644 systemd/*.service $(PACKAGE_DIR)/usr/lib/systemd/user/
+	install -m 0644 systemd-system/*.service systemd-system/*.socket $(PACKAGE_DIR)/usr/lib/systemd/system/
 	install -m 0644 systemd-system/avahi-daemon.service.d/rkwebscr.conf $(PACKAGE_DIR)/usr/lib/systemd/system/avahi-daemon.service.d/
 	install -m 0644 avahi/*.service $(PACKAGE_DIR)/etc/avahi/services/
 	install -m 0644 udev/99-rkwebscr-rockchip.rules $(PACKAGE_DIR)/usr/lib/udev/rules.d/

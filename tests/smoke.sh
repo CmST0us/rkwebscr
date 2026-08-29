@@ -37,7 +37,10 @@ grep -q 'wl-clipboard' debian/control
 grep -q 'ubuntu-session' debian/control
 grep -q 'avahi-daemon' debian/control
 grep -q '_rkwebscr._tcp' avahi/rkwebscr.service
+grep -q '<port>80</port>' avahi/rkwebscr.service
 grep -q 'host-name=rkwebscr' systemd-system/avahi-daemon.service.d/rkwebscr.conf
+grep -q 'ListenStream=80' systemd-system/rkwebscr-http.socket
+grep -q 'systemd-socket-proxyd 127.0.0.1:8080' systemd-system/rkwebscr-http.service
 grep -q 'clipboard-set' server/rkwebscrd.py
 grep -q 'wl-copy' server/rkwebscrd.py
 grep -q 'stderr=subprocess.DEVNULL' server/rkwebscrd.py
