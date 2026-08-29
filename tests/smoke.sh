@@ -21,6 +21,7 @@ grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
 grep -q 'target=self._pace_frames' server/rkwebscrd.py
 grep -q 'len(self._frame_queue) >= 3' server/rkwebscrd.py
 grep -q 'RKWEBSCR_CAPTURE_FPS=64' systemd/rkwebscr.service
+grep -q -- '--width 1024 --height 576 --fps 60' systemd/rkwebscr.service
 grep -q 'SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&variable_rate)' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'SPA_FORMAT_VIDEO_maxFramerate, SPA_POD_Fraction(&max_rate)' native/rkwebscr-dmabuf-encoder.cpp
 if grep -q 'disable-animations' server/rkwebscrd.py; then
