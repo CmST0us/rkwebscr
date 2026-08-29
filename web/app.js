@@ -255,16 +255,20 @@ function startFrameSmoother() {
       if (state.frames.length > 10) state.frames.shift().close();
     }
   };
-  const capture = () => {
-    if (!state.active) return;
+  const snapshot = () => {
     const sequence = state.sequence++;
-    state.capture = video.requestVideoFrameCallback(capture);
     createImageBitmap(video).then((frame) => {
       if (!state.active) return frame.close();
       state.ready.set(sequence, frame);
       flush();
     }).catch(stopFrameSmoother);
   };
+  const capture = () => {
+    if (!state.active) return;
+    snapshot();
+    state.capture = video.requestVideoFrameCallback(capture);
+  };
+  snapshot();
   state.capture = video.requestVideoFrameCallback(capture);
 
   const samples = [];
