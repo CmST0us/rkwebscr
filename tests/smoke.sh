@@ -19,6 +19,7 @@ grep -q 'opusenc' server/rkwebscrd.py
 grep -q 'rtpopusdepay' server/rkwebscrd.py
 grep -q 'mode=provide' server/rkwebscrd.py
 grep -q 'rkwebscr_microphone' server/rkwebscrd.py
+grep -q 'rkwebscr_output' server/rkwebscrd.py
 grep -q 'ConnectToEIS' server/rkwebscrd.py
 grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
 grep -q 'max-buffers=3' server/rkwebscrd.py

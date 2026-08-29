@@ -3,6 +3,7 @@
 ## 0.4.0 - 2026-08-29
 
 - Forward the browser microphone to a PipeWire source selected as GNOME's default input.
+- Capture desktop sound from a dedicated headless PipeWire output instead of a physical HDMI monitor.
 - Add separate speaker and microphone controls to the web client.
 
 ## 0.3.8 - 2026-08-29

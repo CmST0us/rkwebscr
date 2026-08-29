@@ -1,6 +1,7 @@
 rkwebscr (0.4.0) unstable; urgency=medium
 
   * Forward browser microphone audio into GNOME through a PipeWire source.
+  * Route headless desktop audio through a dedicated PipeWire output.
   * Expose browser audio playback failures instead of silently ignoring them.
 
  -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 20:45:00 +0800
