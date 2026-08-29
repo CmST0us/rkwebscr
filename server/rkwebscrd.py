@@ -56,6 +56,44 @@ def usb_sdp_offer(sdp: str) -> str:
     return "\r\n".join(lines) + "\r\n"
 
 
+def pipewire_default_node(alias: str) -> str | None:
+    try:
+        result = subprocess.run(
+            ["wpctl", "inspect", alias],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    marker = "node.name = \""
+    for line in result.stdout.splitlines():
+        if marker in line:
+            return line.split(marker, 1)[1].split('"', 1)[0]
+    return None
+
+
+def set_pipewire_default(kind: str, name: str) -> None:
+    try:
+        subprocess.run(
+            [
+                "pw-metadata",
+                "-n",
+                "default",
+                "0",
+                f"default.audio.{kind}",
+                json.dumps({"name": name}, separators=(",", ":")),
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        LOG.warning("Could not select PipeWire audio %s %s", kind, name)
+
+
 def proxy(name: str, path: str, interface: str) -> Gio.DBusProxy:
     return Gio.DBusProxy.new_for_bus_sync(
         Gio.BusType.SESSION,
@@ -458,7 +496,6 @@ class WebRTCSession:
         self.screen: Gst.Element | None = None
         self.microphone: Gst.Bin | None = None
         self.control = None
-        self._previous_audio_sink: str | None = None
         self._previous_audio_source: str | None = None
         self._frame_duration = Gst.SECOND // app.config.fps
         self._last_frame_ns = 0
@@ -525,19 +562,9 @@ class WebRTCSession:
             audio = self.pipeline.get_by_name("audio")
             audio.set_property("client-name", "rkwebscr-audio")
             props = Gst.Structure.new_empty("props")
-            if c.audio_target:
-                props.set_value("media.role", "Screen")
-                props.set_value("stream.capture.sink", True)
-                audio.set_property("target-object", c.audio_target)
-            else:
-                self._previous_audio_sink = self._get_default_audio_node(
-                    "@DEFAULT_AUDIO_SINK@"
-                )
-                audio.set_property("autoconnect", False)
-                props.set_value("media.class", "Audio/Sink")
-                props.set_value("media.role", "Music")
-                props.set_value("node.name", "rkwebscr_output")
-                props.set_value("node.description", "rkwebscr Output")
+            props.set_value("media.role", "Screen")
+            props.set_value("stream.capture.sink", True)
+            audio.set_property("target-object", c.audio_target or "rkwebscr_output")
             audio.set_property("stream-properties", props)
 
         self.webrtc.connect("notify::ice-gathering-state", self._on_ice_state)
@@ -550,8 +577,6 @@ class WebRTCSession:
         result = self.pipeline.set_state(Gst.State.PLAYING)
         if result == Gst.StateChangeReturn.FAILURE:
             raise RuntimeError("GStreamer pipeline failed to enter PLAYING")
-        if c.audio and not c.audio_target:
-            GLib.timeout_add(250, self._make_audio_output_default)
         self.control = self.webrtc.emit("create-data-channel", "control", None)
         if not self.control:
             raise RuntimeError("Could not create the WebRTC control data channel")
@@ -575,10 +600,8 @@ class WebRTCSession:
     def close(self) -> None:
         if self.pipeline:
             self.pipeline.set_state(Gst.State.NULL)
-        if self._previous_audio_sink:
-            self._set_default_audio_node("sink", self._previous_audio_sink)
         if self._previous_audio_source:
-            self._set_default_audio_node("source", self._previous_audio_source)
+            set_pipewire_default("source", self._previous_audio_source)
         self.pipeline = None
         self.webrtc = None
         self.nice_agent = None
@@ -593,9 +616,7 @@ class WebRTCSession:
             return
         if caps.get_structure(0).get_string("media") != "audio":
             return
-        self._previous_audio_source = self._get_default_audio_node(
-            "@DEFAULT_AUDIO_SOURCE@"
-        )
+        self._previous_audio_source = pipewire_default_node("@DEFAULT_AUDIO_SOURCE@")
         microphone = Gst.parse_bin_from_description(
             "queue max-size-buffers=16 max-size-bytes=0 max-size-time=200000000 ! "
             "rtpopusdepay ! opusdec plc=true ! audioconvert ! audioresample ! "
@@ -623,52 +644,9 @@ class WebRTCSession:
         GLib.timeout_add(250, self._make_microphone_default)
         LOG.info("Browser microphone is available as rkwebscr_microphone")
 
-    @staticmethod
-    def _get_default_audio_node(alias: str) -> str | None:
-        try:
-            result = subprocess.run(
-                ["wpctl", "inspect", alias],
-                capture_output=True,
-                text=True,
-                timeout=2,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            return None
-        marker = "node.name = \""
-        for line in result.stdout.splitlines():
-            if marker in line:
-                return line.split(marker, 1)[1].split('"', 1)[0]
-        return None
-
-    @staticmethod
-    def _set_default_audio_node(kind: str, name: str) -> None:
-        try:
-            subprocess.run(
-                [
-                    "pw-metadata",
-                    "-n",
-                    "default",
-                    "0",
-                    f"default.audio.{kind}",
-                    json.dumps({"name": name}, separators=(",", ":")),
-                ],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=2,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            LOG.warning("Could not select PipeWire audio %s %s", kind, name)
-
-    def _make_audio_output_default(self) -> bool:
-        if self.pipeline:
-            self._set_default_audio_node("sink", "rkwebscr_output")
-        return GLib.SOURCE_REMOVE
-
     def _make_microphone_default(self) -> bool:
         if self.microphone:
-            self._set_default_audio_node("source", "rkwebscr_microphone")
+            set_pipewire_default("source", "rkwebscr_microphone")
         return GLib.SOURCE_REMOVE
 
     def create_offer(self, timeout: float = 12.0) -> str:
@@ -995,10 +973,14 @@ class Application:
         self.mutter = MutterSession(args.width, args.height)
         self.webrtc: WebRTCSession | None = None
         self.encoder: NativeEncoder | None = None
+        self.audio_output: Gst.Pipeline | None = None
         self.httpd: ThreadingHTTPServer | None = None
         self._node_id: int | None = None
+        self._previous_audio_sink: str | None = None
 
     def start(self) -> None:
+        if self.config.audio and not self.config.audio_target:
+            self._start_audio_output()
         self.httpd = ThreadingHTTPServer(
             (self.config.bind, self.config.port), RequestHandler
         )
@@ -1015,6 +997,34 @@ class Application:
         if self.webrtc:
             self.webrtc.close()
         self.mutter.stop()
+        if self.audio_output:
+            self.audio_output.set_state(Gst.State.NULL)
+        if self._previous_audio_sink:
+            set_pipewire_default("sink", self._previous_audio_sink)
+
+    def _start_audio_output(self) -> None:
+        self._previous_audio_sink = pipewire_default_node("@DEFAULT_AUDIO_SINK@")
+        self.audio_output = Gst.parse_launch(
+            "pipewiresrc name=output autoconnect=false keepalive-time=10 "
+            "min-buffers=2 max-buffers=8 ! "
+            "audio/x-raw,rate=48000,channels=2 ! fakesink sync=false"
+        )
+        output = self.audio_output.get_by_name("output")
+        output.set_property("client-name", "rkwebscr-output")
+        props = Gst.Structure.new_empty("props")
+        props.set_value("media.class", "Audio/Sink")
+        props.set_value("media.role", "Music")
+        props.set_value("node.name", "rkwebscr_output")
+        props.set_value("node.description", "rkwebscr Output")
+        output.set_property("stream-properties", props)
+        if self.audio_output.set_state(Gst.State.PLAYING) == Gst.StateChangeReturn.FAILURE:
+            raise RuntimeError("Could not create the PipeWire audio output")
+        GLib.timeout_add(250, self._make_audio_output_default)
+
+    def _make_audio_output_default(self) -> bool:
+        if self.audio_output:
+            set_pipewire_default("sink", "rkwebscr_output")
+        return GLib.SOURCE_REMOVE
 
     def _on_pipewire_node(self, node_id: int) -> None:
         self._node_id = node_id
