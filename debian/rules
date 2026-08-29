@@ -4,7 +4,7 @@ include /usr/share/dpkg/architecture.mk
 include /usr/share/dpkg/buildflags.mk
 include /usr/share/dpkg/pkg-info.mk
 
-PACKAGE := rkstream
+PACKAGE := rkwebscr
 PACKAGE_DIR := debian/$(PACKAGE)
 DEB_FILE := ../$(PACKAGE)_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
 
@@ -27,22 +27,22 @@ binary-arch: build-arch
 	rm -rf $(PACKAGE_DIR)
 	install -d $(PACKAGE_DIR)/DEBIAN \
 		$(PACKAGE_DIR)/usr/bin \
-		$(PACKAGE_DIR)/usr/libexec/rkstream \
-		$(PACKAGE_DIR)/usr/share/rkstream/web \
+		$(PACKAGE_DIR)/usr/libexec/rkwebscr \
+		$(PACKAGE_DIR)/usr/share/rkwebscr/web \
 		$(PACKAGE_DIR)/usr/share/doc/$(PACKAGE) \
 		$(PACKAGE_DIR)/usr/lib/systemd/user \
 		$(PACKAGE_DIR)/usr/lib/udev/rules.d
-	install -m 0755 server/rkstreamd.py $(PACKAGE_DIR)/usr/bin/rkstreamd
-	install -m 0755 native/rkstream-dmabuf-encoder $(PACKAGE_DIR)/usr/libexec/rkstream/
-	install -m 0755 scripts/rkstream-setup $(PACKAGE_DIR)/usr/bin/
-	install -m 0644 web/index.html web/app.js web/styles.css $(PACKAGE_DIR)/usr/share/rkstream/web/
+	install -m 0755 server/rkwebscrd.py $(PACKAGE_DIR)/usr/bin/rkwebscrd
+	install -m 0755 native/rkwebscr-dmabuf-encoder $(PACKAGE_DIR)/usr/libexec/rkwebscr/
+	install -m 0755 scripts/rkwebscr-setup $(PACKAGE_DIR)/usr/bin/
+	install -m 0644 web/index.html web/app.js web/styles.css $(PACKAGE_DIR)/usr/share/rkwebscr/web/
 	install -m 0644 systemd/*.service $(PACKAGE_DIR)/usr/lib/systemd/user/
-	install -m 0644 udev/99-rkstream-rockchip.rules $(PACKAGE_DIR)/usr/lib/udev/rules.d/
+	install -m 0644 udev/99-rkwebscr-rockchip.rules $(PACKAGE_DIR)/usr/lib/udev/rules.d/
 	install -m 0644 README.md LICENSE $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/
 	gzip -9nc debian/changelog > $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
 	chmod 0644 $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
-	$(DEB_HOST_GNU_TYPE)-strip --strip-unneeded $(PACKAGE_DIR)/usr/libexec/rkstream/rkstream-dmabuf-encoder
-	dpkg-shlibdeps --ignore-missing-info -xrockchip-mpp -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/libexec/rkstream/rkstream-dmabuf-encoder
+	$(DEB_HOST_GNU_TYPE)-strip --strip-unneeded $(PACKAGE_DIR)/usr/libexec/rkwebscr/rkwebscr-dmabuf-encoder
+	dpkg-shlibdeps --ignore-missing-info -xrockchip-mpp -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/libexec/rkwebscr/rkwebscr-dmabuf-encoder
 	dpkg-gencontrol -p$(PACKAGE) -P$(PACKAGE_DIR) -Tdebian/$(PACKAGE).substvars
 	cp debian/postinst $(PACKAGE_DIR)/DEBIAN/postinst
 	chmod 0755 $(PACKAGE_DIR)/DEBIAN/postinst

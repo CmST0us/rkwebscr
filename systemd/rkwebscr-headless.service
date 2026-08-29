@@ -1,5 +1,5 @@
 [Unit]
-Description=Headless GNOME Shell for rkstream
+Description=Headless GNOME Shell for rkwebscr
 
 [Service]
 Type=simple

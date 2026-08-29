@@ -28,7 +28,7 @@ gi.require_version("GstWebRTC", "1.0")
 from gi.repository import Gio, GLib, Gst, GstSdp, GstWebRTC
 
 
-LOG = logging.getLogger("rkstream")
+LOG = logging.getLogger("rkwebscr")
 MUTTER_REMOTE_DESKTOP = "org.gnome.Mutter.RemoteDesktop"
 MUTTER_SCREEN_CAST = "org.gnome.Mutter.ScreenCast"
 
@@ -73,7 +73,7 @@ class EiInput:
         self.context = self.lib.ei_new_sender(None)
         if not self.context:
             raise RuntimeError("Could not create libei sender")
-        self.lib.ei_configure_name(self.context, b"rkstream")
+        self.lib.ei_configure_name(self.context, b"rkwebscr")
         result = self.lib.ei_setup_backend_fd(self.context, fd)
         if result < 0:
             self.lib.ei_unref(self.context)
@@ -481,7 +481,7 @@ class WebRTCSession:
 
         if c.audio:
             audio = self.pipeline.get_by_name("audio")
-            audio.set_property("client-name", "rkstream-audio")
+            audio.set_property("client-name", "rkwebscr-audio")
             props = Gst.Structure.new_empty("props")
             props.set_value("media.role", "Screen")
             props.set_value("stream.capture.sink", True)
@@ -688,7 +688,7 @@ class NativeEncoder:
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    server_version = "rkstream/0.1"
+    server_version = "rkwebscr/0.1"
 
     @property
     def app(self) -> "Application":
@@ -865,8 +865,8 @@ def load_token(path: Path) -> str:
 
 def parse_args():
     root = Path(__file__).resolve().parents[1]
-    installed_web = Path("/usr/share/rkstream/web")
-    installed_encoder = Path("/usr/libexec/rkstream/rkstream-dmabuf-encoder")
+    installed_web = Path("/usr/share/rkwebscr/web")
+    installed_encoder = Path("/usr/libexec/rkwebscr/rkwebscr-dmabuf-encoder")
     parser = argparse.ArgumentParser()
     parser.add_argument("--bind", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
@@ -880,13 +880,13 @@ def parse_args():
         "--web-root",
         default=str(installed_web if installed_web.is_dir() else root / "web"),
     )
-    parser.add_argument("--token-file", default="~/.config/rkstream/token")
+    parser.add_argument("--token-file", default="~/.config/rkwebscr/token")
     parser.add_argument(
         "--encoder-bridge",
         default=str(
             installed_encoder
             if installed_encoder.is_file()
-            else root / "native" / "rkstream-dmabuf-encoder"
+            else root / "native" / "rkwebscr-dmabuf-encoder"
         ),
     )
     parser.add_argument("--verbose", action="store_true")

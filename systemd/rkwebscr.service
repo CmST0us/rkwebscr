@@ -1,15 +1,15 @@
 [Unit]
-Description=Rock5B GNOME WebRTC remote control
-Requires=rkstream-headless.service
-After=rkstream-headless.service pipewire.service wireplumber.service
+Description=rkwebscr GNOME WebRTC remote control
+Requires=rkwebscr-headless.service
+After=rkwebscr-headless.service pipewire.service wireplumber.service
 Wants=pipewire.service wireplumber.service
 
 [Service]
 Type=simple
 KillMode=mixed
 Environment=PYTHONUNBUFFERED=1
-Environment=GST_REGISTRY=%t/rkstream-gstreamer-registry.bin
-Environment=RKSTREAM_CAPTURE_FPS=64
+Environment=GST_REGISTRY=%t/rkwebscr-gstreamer-registry.bin
+Environment=RKWEBSCR_CAPTURE_FPS=64
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=DISPLAY=:0
 Environment=XDG_SESSION_TYPE=wayland
@@ -17,7 +17,7 @@ Environment=XDG_CURRENT_DESKTOP=GNOME
 Environment=XDG_SESSION_DESKTOP=gnome
 ExecStartPre=/bin/sh -c 'for i in $(seq 1 50); do test -S %t/wayland-0 && exit 0; sleep .1; done; exit 1'
 ExecStartPre=/usr/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-ExecStart=/usr/bin/rkstreamd --bind 0.0.0.0 --port 8080 --width 1280 --height 720 --fps 60 --bitrate 6000000
+ExecStart=/usr/bin/rkwebscrd --bind 0.0.0.0 --port 8080 --width 1280 --height 720 --fps 60 --bitrate 6000000
 Restart=on-failure
 RestartSec=2
 TimeoutStopSec=5

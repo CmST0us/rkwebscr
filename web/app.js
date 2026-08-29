@@ -64,9 +64,9 @@ const downKeys = new Set();
 
 function loadToken() {
   const url = new URL(location.href);
-  token = url.searchParams.get("token") || sessionStorage.getItem("rkstream-token") || "";
+  token = url.searchParams.get("token") || sessionStorage.getItem("rkwebscr-token") || "";
   if (token) {
-    sessionStorage.setItem("rkstream-token", token);
+    sessionStorage.setItem("rkwebscr-token", token);
     url.searchParams.delete("token");
     history.replaceState(null, "", url);
   }

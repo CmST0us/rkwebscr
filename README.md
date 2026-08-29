@@ -1,6 +1,6 @@
-# rkstream
+# rkwebscr
 
-Low-latency GNOME Wayland remote control for Rockchip RK3588 boards. rkstream
+Low-latency GNOME Wayland remote control for Rockchip RK3588 boards. rkwebscr
 creates a headless Mutter virtual monitor and streams it to one browser on the
 LAN. It is tested on Radxa ROCK 5B with Ubuntu 24.04 and GNOME 46.
 
@@ -30,7 +30,7 @@ replace or modify an existing GStreamer installation.
 native/     DMA-BUF to Rockchip MPP encoder
 server/     GNOME, WebRTC, input, and HTTP service
 web/        Browser client
-systemd/    User services for headless GNOME and rkstream
+systemd/    User services for headless GNOME and rkwebscr
 udev/       Rockchip media-device permissions
 scripts/    Post-install user setup
 debian/     Debian source-package metadata
@@ -59,7 +59,7 @@ Build the Debian binary package:
 make deb
 ```
 
-`dpkg-buildpackage` writes `rkstream_0.1.0_<architecture>.deb` to the parent
+`dpkg-buildpackage` writes `rkwebscr_0.1.0_<architecture>.deb` to the parent
 directory, following normal Debian source-package conventions.
 
 ## Install
@@ -67,7 +67,7 @@ directory, following normal Debian source-package conventions.
 Install the package and enable lingering for the desktop user:
 
 ```bash
-sudo apt install ../rkstream_0.1.0_arm64.deb
+sudo apt install ../rkwebscr_0.1.0_arm64.deb
 sudo usermod -aG video "$USER"
 sudo loginctl enable-linger "$USER"
 ```
@@ -80,14 +80,14 @@ enabled:
 systemctl --user disable --now gnome-remote-desktop.service
 ```
 
-Start rkstream as the desktop user:
+Start rkwebscr as the desktop user:
 
 ```bash
-rkstream-setup
+rkwebscr-setup
 ```
 
 The command enables both user services and prints the tokenized LAN URL. The
-token is stored with mode `0600` in `~/.config/rkstream/token`.
+token is stored with mode `0600` in `~/.config/rkwebscr/token`.
 
 For USB instead of LAN transport:
 
@@ -102,17 +102,17 @@ or SSH tunnel.
 ## Configuration
 
 The packaged defaults are 1280x720, 60 FPS, 6 Mbps CBR, and one-second GOP.
-Override the service with `systemctl --user edit rkstream.service` when another
-resolution or bitrate is needed. `RKSTREAM_CAPTURE_FPS` is the hardware
+Override the service with `systemctl --user edit rkwebscr.service` when another
+resolution or bitrate is needed. `RKWEBSCR_CAPTURE_FPS` is the hardware
 calibration knob; the ROCK 5B default is 64 to produce approximately 60 output
 frames per second.
 
 Useful commands:
 
 ```bash
-systemctl --user status rkstream-headless.service rkstream.service
-journalctl --user -u rkstream.service -f
-systemctl --user restart rkstream.service
+systemctl --user status rkwebscr-headless.service rkwebscr.service
+journalctl --user -u rkwebscr.service -f
+systemctl --user restart rkwebscr.service
 ```
 
 A black but connected stream can simply be an empty headless workspace. Launch

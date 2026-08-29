@@ -69,7 +69,7 @@ struct Encoder {
           stride_height((h + 15) & ~15), output_fd(fd) {
         auto check = [](MPP_RET result, const char *what) {
             if (result != MPP_OK) {
-                std::fprintf(stderr, "rkstream-dmabuf: %s failed: %d\n", what, result);
+                std::fprintf(stderr, "rkwebscr-dmabuf: %s failed: %d\n", what, result);
                 std::exit(1);
             }
         };
@@ -123,7 +123,7 @@ struct Encoder {
             slot.nv12 = static_cast<uint8_t *>(mpp_buffer_get_ptr(slot.buffer));
             if (!slot.nv12) {
                 std::fprintf(stderr,
-                             "rkstream-dmabuf: could not map MPP output buffer\n");
+                             "rkwebscr-dmabuf: could not map MPP output buffer\n");
                 std::exit(1);
             }
         }
@@ -179,7 +179,7 @@ struct Encoder {
             stride_width, width, height);
         mpp_buffer_sync_end(slot.buffer);
         if (converted != 0) {
-            std::fprintf(stderr, "rkstream-dmabuf: libyuv conversion failed: %d\n",
+            std::fprintf(stderr, "rkwebscr-dmabuf: libyuv conversion failed: %d\n",
                          converted);
             release(index);
             failed++;
@@ -189,7 +189,7 @@ struct Encoder {
         mpp_frame_set_pts(slot.frame, pts);
         MPP_RET result = api->encode_put_frame(ctx, slot.frame);
         if (result != MPP_OK) {
-            std::fprintf(stderr, "rkstream-dmabuf: MPP submit failed: %d\n",
+            std::fprintf(stderr, "rkwebscr-dmabuf: MPP submit failed: %d\n",
                          result);
             release(index);
             failed++;
@@ -227,7 +227,7 @@ struct Encoder {
             if (ok)
                 encoded++;
             else {
-                std::fprintf(stderr, "rkstream-dmabuf: MPP output failed: %d\n",
+                std::fprintf(stderr, "rkwebscr-dmabuf: MPP output failed: %d\n",
                              result);
                 failed++;
             }
@@ -303,7 +303,7 @@ struct State {
 void on_state_changed(void *data, pw_stream_state old_state,
                       pw_stream_state state, const char *error) {
     auto *self = static_cast<State *>(data);
-    std::fprintf(stderr, "rkstream-dmabuf: PipeWire %s -> %s%s%s\n",
+    std::fprintf(stderr, "rkwebscr-dmabuf: PipeWire %s -> %s%s%s\n",
                  pw_stream_state_as_string(old_state),
                  pw_stream_state_as_string(state), error ? ": " : "",
                  error ? error : "");
@@ -316,7 +316,7 @@ void on_param_changed(void *data, uint32_t id, const spa_pod *param) {
     if (!param || id != SPA_PARAM_Format)
         return;
     if (spa_format_video_raw_parse(param, &self->format) < 0) {
-        std::fprintf(stderr, "rkstream-dmabuf: unsupported PipeWire video format\n");
+        std::fprintf(stderr, "rkwebscr-dmabuf: unsupported PipeWire video format\n");
         pw_main_loop_quit(self->loop);
         return;
     }
@@ -355,7 +355,7 @@ void on_process(void *data) {
     spa_buffer *spa_buffer = buffer->buffer;
     if (spa_buffer->n_datas == 0 || spa_buffer->datas[0].type != SPA_DATA_DmaBuf ||
         spa_buffer->datas[0].fd < 0) {
-        std::fprintf(stderr, "rkstream-dmabuf: expected a DMA-BUF frame\n");
+        std::fprintf(stderr, "rkwebscr-dmabuf: expected a DMA-BUF frame\n");
         self->encoder->failed++;
         pw_stream_queue_buffer(self->stream, buffer);
         return;
@@ -376,7 +376,7 @@ void on_process(void *data) {
         gbm_bo *imported = gbm_bo_import(self->gbm, GBM_BO_IMPORT_FD,
                                          &info, GBM_BO_USE_LINEAR);
         if (!imported) {
-            std::fprintf(stderr, "rkstream-dmabuf: GBM import failed for fd %d\n",
+            std::fprintf(stderr, "rkwebscr-dmabuf: GBM import failed for fd %d\n",
                          info.fd);
             self->encoder->failed++;
             pw_stream_queue_buffer(self->stream, buffer);
@@ -388,7 +388,7 @@ void on_process(void *data) {
             imported, 0, 0, self->width, self->height,
             GBM_BO_TRANSFER_READ, &mapped_stride, &map_data));
         if (!mapped) {
-            std::fprintf(stderr, "rkstream-dmabuf: GBM map failed for fd %d\n",
+            std::fprintf(stderr, "rkwebscr-dmabuf: GBM map failed for fd %d\n",
                          static_cast<int>(plane.fd));
             gbm_bo_destroy(imported);
             self->encoder->failed++;
@@ -418,7 +418,7 @@ void on_process(void *data) {
         static uint64_t previous = 0;
         uint64_t encoded = self->encoder->encoded.load();
         std::fprintf(stderr,
-                     "rkstream-dmabuf: %.1f fps, %llu encoded, %llu dropped, %llu failed\n",
+                     "rkwebscr-dmabuf: %.1f fps, %llu encoded, %llu dropped, %llu failed\n",
                      (encoded - previous) / seconds,
                      static_cast<unsigned long long>(encoded),
                      static_cast<unsigned long long>(self->encoder->dropped.load()),
@@ -461,24 +461,24 @@ int main(int argc, char **argv) {
     state.width = positive(argv[2], "width");
     state.height = positive(argv[3], "height");
     state.fps = positive(argv[4], "fps");
-    const char *capture_fps = std::getenv("RKSTREAM_CAPTURE_FPS");
+    const char *capture_fps = std::getenv("RKWEBSCR_CAPTURE_FPS");
     state.capture_fps = capture_fps ? positive(capture_fps, "capture fps")
                                     : state.fps;
     int bitrate = positive(argv[5], "bitrate");
     int output_fd = positive(argv[6], "output fd");
 
-    const char *render_node = std::getenv("RKSTREAM_RENDER_NODE");
+    const char *render_node = std::getenv("RKWEBSCR_RENDER_NODE");
     if (!render_node)
         render_node = "/dev/dri/renderD130";
     state.drm_fd = open(render_node, O_RDWR | O_CLOEXEC);
     if (state.drm_fd < 0) {
-        std::fprintf(stderr, "rkstream-dmabuf: could not open %s: %s\n",
+        std::fprintf(stderr, "rkwebscr-dmabuf: could not open %s: %s\n",
                      render_node, std::strerror(errno));
         return 1;
     }
     state.gbm = gbm_create_device(state.drm_fd);
     if (!state.gbm) {
-        std::fprintf(stderr, "rkstream-dmabuf: could not create GBM device\n");
+        std::fprintf(stderr, "rkwebscr-dmabuf: could not create GBM device\n");
         return 1;
     }
 
@@ -487,18 +487,18 @@ int main(int argc, char **argv) {
     state.encoder = &encoder;
     state.loop = pw_main_loop_new(nullptr);
     if (!state.loop) {
-        std::fprintf(stderr, "rkstream-dmabuf: could not create PipeWire loop\n");
+        std::fprintf(stderr, "rkwebscr-dmabuf: could not create PipeWire loop\n");
         return 1;
     }
 
     pw_properties *properties = pw_properties_new(
         PW_KEY_MEDIA_TYPE, "Video", PW_KEY_MEDIA_CATEGORY, "Capture",
-        PW_KEY_MEDIA_ROLE, "Screen", PW_KEY_APP_NAME, "rkstream-dmabuf", nullptr);
+        PW_KEY_MEDIA_ROLE, "Screen", PW_KEY_APP_NAME, "rkwebscr-dmabuf", nullptr);
     state.stream = pw_stream_new_simple(pw_main_loop_get_loop(state.loop),
-                                        "rkstream-dmabuf", properties,
+                                        "rkwebscr-dmabuf", properties,
                                         &stream_events, &state);
     if (!state.stream) {
-        std::fprintf(stderr, "rkstream-dmabuf: could not create PipeWire stream\n");
+        std::fprintf(stderr, "rkwebscr-dmabuf: could not create PipeWire stream\n");
         pw_main_loop_destroy(state.loop);
         return 1;
     }
@@ -535,7 +535,7 @@ int main(int argc, char **argv) {
                                      PW_STREAM_FLAG_RT_PROCESS),
         &format, 1);
     if (result < 0) {
-        std::fprintf(stderr, "rkstream-dmabuf: PipeWire connect failed: %s\n",
+        std::fprintf(stderr, "rkwebscr-dmabuf: PipeWire connect failed: %s\n",
                      spa_strerror(result));
         pw_stream_destroy(state.stream);
         pw_main_loop_destroy(state.loop);
@@ -543,7 +543,7 @@ int main(int argc, char **argv) {
     }
 
     std::fprintf(stderr,
-                 "rkstream-dmabuf: requesting linear DMA-BUF %dx%d, max %d fps\n",
+                 "rkwebscr-dmabuf: requesting linear DMA-BUF %dx%d, max %d fps\n",
                  state.width, state.height, state.capture_fps);
     pw_main_loop_run(state.loop);
     pw_stream_destroy(state.stream);
