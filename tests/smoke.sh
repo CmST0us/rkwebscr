@@ -50,11 +50,14 @@ grep -q 'totalSquaredInterFrameDelay' web/app.js
 grep -q '>Cadence<' web/index.html
 grep -q '>Dropped<' web/index.html
 grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.service
+grep -q '^Wants=graphical-session.target$' systemd/rkwebscr-headless.service
+grep -q '^Before=graphical-session.target$' systemd/rkwebscr-headless.service
+grep -q '^PartOf=graphical-session.target$' systemd/rkwebscr-headless.service
 grep -q 'GNOME_SHELL_SESSION_MODE=ubuntu' systemd/rkwebscr-headless.service
 grep -q 'XDG_CURRENT_DESKTOP=ubuntu:GNOME' systemd/rkwebscr.service
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.4.1)' debian/changelog
-grep -q 'server_version = "rkwebscr/0.4.1"' server/rkwebscrd.py
+grep -q '^rkwebscr (0.4.2)' debian/changelog
+grep -q 'server_version = "rkwebscr/0.4.2"' server/rkwebscrd.py
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then

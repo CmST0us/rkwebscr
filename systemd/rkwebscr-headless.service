@@ -1,5 +1,8 @@
 [Unit]
 Description=Headless GNOME Shell for rkwebscr
+Wants=graphical-session.target
+Before=graphical-session.target
+PartOf=graphical-session.target
 
 [Service]
 Type=simple

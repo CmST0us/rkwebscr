@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2 - 2026-08-30
+
+- Tie the headless shell to `graphical-session.target` so GNOME portal services
+  and applications start without D-Bus timeouts.
+
 ## 0.4.1 - 2026-08-29
 
 - Remove the ADB-forwarded USB transport and use normal LAN ICE candidates.

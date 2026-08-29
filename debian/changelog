@@ -1,3 +1,10 @@
+rkwebscr (0.4.2) unstable; urgency=medium
+
+  * Activate graphical-session.target with the headless GNOME Shell.
+  * Avoid portal and GNOME application startup timeouts.
+
+ -- Eric Wu <eric3u@outlook.com>  Sun, 30 Aug 2026 00:20:00 +0800
+
 rkwebscr (0.4.1) unstable; urgency=medium
 
   * Remove the ADB-forwarded USB transport and use normal LAN ICE candidates.
