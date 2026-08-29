@@ -10,7 +10,6 @@ import logging
 import mimetypes
 import os
 from pathlib import Path
-import secrets
 import signal
 import struct
 import subprocess
@@ -688,7 +687,7 @@ class NativeEncoder:
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    server_version = "rkwebscr/0.1"
+    server_version = "rkwebscr/0.1.2"
 
     @property
     def app(self) -> "Application":
@@ -697,14 +696,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = urlparse(self.path).path
         if path == "/api/status":
-            if not self._authorized():
-                return self._json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
             return self._json(HTTPStatus.OK, self.app.status())
         self._serve_static(path)
 
     def do_POST(self) -> None:
-        if not self._authorized():
-            return self._json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
         path = urlparse(self.path).path
         try:
             if path == "/api/offer":
@@ -721,11 +716,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.GATEWAY_TIMEOUT, {"error": str(error)})
         except (RuntimeError, ValueError) as error:
             self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
-
-    def _authorized(self) -> bool:
-        return secrets.compare_digest(
-            self.headers.get("Authorization", ""), f"Bearer {self.app.token}"
-        )
 
     def _read_json(self) -> dict:
         size = int(self.headers.get("Content-Length", "0"))
@@ -783,7 +773,6 @@ class Application:
     def __init__(self, args):
         self.config = Config(args)
         self.web_root = Path(args.web_root)
-        self.token = load_token(Path(args.token_file))
         self.mutter = MutterSession(args.width, args.height)
         self.webrtc: WebRTCSession | None = None
         self.encoder: NativeEncoder | None = None
@@ -796,7 +785,7 @@ class Application:
         )
         self.httpd.app = self
         threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
-        LOG.info("Control URL: http://%s:%d/?token=%s", self.config.bind, self.config.port, self.token)
+        LOG.info("Control URL: http://%s:%d/", self.config.bind, self.config.port)
         self.mutter.start(self._on_pipewire_node)
 
     def stop(self) -> None:
@@ -851,18 +840,6 @@ class Application:
         GLib.idle_add(self.webrtc.set_answer, answer)
 
 
-def load_token(path: Path) -> str:
-    path = path.expanduser()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists():
-        return path.read_text(encoding="utf-8").strip()
-    token = secrets.token_urlsafe(24)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as handle:
-        handle.write(token + "\n")
-    return token
-
-
 def parse_args():
     root = Path(__file__).resolve().parents[1]
     installed_web = Path("/usr/share/rkwebscr/web")
@@ -880,7 +857,6 @@ def parse_args():
         "--web-root",
         default=str(installed_web if installed_web.is_dir() else root / "web"),
     )
-    parser.add_argument("--token-file", default="~/.config/rkwebscr/token")
     parser.add_argument(
         "--encoder-bridge",
         default=str(

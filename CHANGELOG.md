@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2 - 2026-08-29
+
+- Remove HTTP control authentication for trusted local networks.
+
+## 0.1.1 - 2026-08-29
+
+- Use Ubuntu-standard package paths and package-managed deployment.
+
 ## 0.1.0 - 2026-08-29
 
 - Create a headless GNOME Wayland virtual monitor through Mutter.

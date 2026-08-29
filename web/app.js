@@ -50,7 +50,6 @@ const EVDEV = {
 };
 const BUTTONS = { 0: 272, 1: 274, 2: 273, 3: 275, 4: 276 };
 
-let token = "";
 let status = null;
 let peer = null;
 let control = null;
@@ -62,20 +61,10 @@ let moveFrame = 0;
 let pendingMove = { dx: 0, dy: 0 };
 const downKeys = new Set();
 
-function loadToken() {
-  const url = new URL(location.href);
-  token = url.searchParams.get("token") || sessionStorage.getItem("rkwebscr-token") || "";
-  if (token) {
-    sessionStorage.setItem("rkwebscr-token", token);
-    url.searchParams.delete("token");
-    history.replaceState(null, "", url);
-  }
-}
-
 async function api(path, options = {}) {
   const response = await fetch(path, {
     ...options,
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...(options.headers || {}) },
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error || `${response.status} ${response.statusText}`);
@@ -96,7 +85,6 @@ function waitForIceGathering(pc) {
 }
 
 async function refreshStatus() {
-  if (!token) throw new Error("访问链接缺少控制令牌");
   status = await api("/api/status");
   elements.resolution.textContent = status.video.height >= 1000 ? `${Math.round(status.video.height / 10) * 10}p` : `${status.video.width}×${status.video.height}`;
   if (!status.ready) throw new Error("GNOME 虚拟显示器仍在启动");
@@ -344,7 +332,6 @@ document.addEventListener("pointerlockchange", () => {
   if (!locked) releaseKeys();
 });
 
-loadToken();
 refreshStatus().then(() => {
   elements.connectMessage.textContent = "准备建立 WebRTC 串流";
 }).catch((error) => {

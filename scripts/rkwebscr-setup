@@ -9,22 +9,9 @@ fi
 systemctl --user daemon-reload
 systemctl --user enable --now rkwebscr-headless.service rkwebscr.service
 
-token_file=${XDG_CONFIG_HOME:-"$HOME/.config"}/rkwebscr/token
-i=0
-while [ ! -s "$token_file" ] && [ "$i" -lt 50 ]; do
-  sleep .1
-  i=$((i + 1))
-done
-
-if [ ! -s "$token_file" ]; then
-  printf '%s\n' 'rkwebscr started, but its access token is not ready yet.' >&2
-  exit 1
-fi
-
-token=$(sed -n '1p' "$token_file")
 address=$(hostname -I 2>/dev/null | awk '{print $1}')
 printf 'rkwebscr is ready.\n'
-printf 'Local: http://127.0.0.1:8080/?token=%s\n' "$token"
+printf '%s\n' 'Local: http://127.0.0.1:8080/'
 if [ -n "$address" ]; then
-  printf 'LAN:   http://%s:8080/?token=%s\n' "$address" "$token"
+  printf 'LAN:   http://%s:8080/\n' "$address"
 fi
