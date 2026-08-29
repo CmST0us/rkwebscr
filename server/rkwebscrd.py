@@ -625,6 +625,10 @@ class WebRTCSession:
         GLib.idle_add(self._open_video_gate)
 
     def _open_video_gate(self) -> bool:
+        if self.app.encoder:
+            self.app.encoder.force_keyframe()
+        if self.app.mutter.input:
+            self.app.mutter.input.motion(1, 0)
         self.video_gate.set_property("drop", False)
         if self.audio_gate:
             self.audio_gate.set_property("drop", False)
@@ -778,6 +782,10 @@ class NativeEncoder:
                 raise EOFError("unexpected end of encoder output")
             data.extend(chunk)
         return bytes(data)
+
+    def force_keyframe(self) -> None:
+        if self.alive:
+            self.process.send_signal(signal.SIGUSR1)
 
     def stop(self) -> None:
         self.stopping = True

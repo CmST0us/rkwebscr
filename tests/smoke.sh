@@ -10,6 +10,8 @@ grep -q 'rkwebscr-dmabuf-encoder' server/rkwebscrd.py
 grep -q 'SPA_DATA_DmaBuf' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'ARGBToNV12' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'encode_put_frame' native/rkwebscr-dmabuf-encoder.cpp
+grep -q 'MPP_ENC_SET_IDR_FRAME' native/rkwebscr-dmabuf-encoder.cpp
+grep -q 'send_signal(signal.SIGUSR1)' server/rkwebscrd.py
 grep -q 'opusenc' server/rkwebscrd.py
 grep -q 'ConnectToEIS' server/rkwebscrd.py
 grep -q 'ei_device_keyboard_key' server/rkwebscrd.py

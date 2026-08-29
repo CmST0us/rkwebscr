@@ -21,6 +21,7 @@
 #include <cerrno>
 #include <chrono>
 #include <condition_variable>
+#include <csignal>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -36,6 +37,12 @@
 #include <linux/dma-buf.h>
 
 namespace {
+
+volatile std::sig_atomic_t force_idr_requested = 0;
+
+void request_idr(int) {
+    force_idr_requested = 1;
+}
 
 struct Encoder {
     struct Slot {
@@ -187,6 +194,13 @@ struct Encoder {
         }
 
         mpp_frame_set_pts(slot.frame, pts);
+        if (force_idr_requested) {
+            force_idr_requested = 0;
+            MPP_RET result = api->control(ctx, MPP_ENC_SET_IDR_FRAME, nullptr);
+            if (result != MPP_OK)
+                std::fprintf(stderr,
+                             "rkwebscr-dmabuf: force IDR failed: %d\n", result);
+        }
         MPP_RET result = api->encode_put_frame(ctx, slot.frame);
         if (result != MPP_OK) {
             std::fprintf(stderr, "rkwebscr-dmabuf: MPP submit failed: %d\n",
@@ -466,6 +480,10 @@ int main(int argc, char **argv) {
                                     : state.fps;
     int bitrate = positive(argv[5], "bitrate");
     int output_fd = positive(argv[6], "output fd");
+    if (std::signal(SIGUSR1, request_idr) == SIG_ERR) {
+        std::fprintf(stderr, "rkwebscr-dmabuf: could not install IDR signal handler\n");
+        return 1;
+    }
 
     const char *render_node = std::getenv("RKWEBSCR_RENDER_NODE");
     if (!render_node)
