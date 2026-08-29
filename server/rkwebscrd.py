@@ -497,10 +497,10 @@ class WebRTCSession:
         """
         self.pipeline = Gst.parse_launch(desc)
         self.webrtc = self.pipeline.get_by_name("webrtc")
-        ice = self.webrtc.get_property("ice-agent")
-        ice.set_property("min-rtp-port", USB_ICE_PORT)
-        ice.set_property("max-rtp-port", USB_ICE_PORT)
-        ice.set_property("ice-tcp", True)
+        self.ice = self.webrtc.get_property("ice-agent")
+        self.ice.set_property("min-rtp-port", USB_ICE_PORT)
+        self.ice.set_property("max-rtp-port", USB_ICE_PORT)
+        self.ice.set_property("ice-tcp", True)
         self.video_gate = self.pipeline.get_by_name("video_gate")
         self.audio_gate = self.pipeline.get_by_name("audio_gate")
         output_names = ["video_out"] + (["audio_out"] if c.audio else [])
@@ -590,6 +590,7 @@ class WebRTCSession:
             self.pipeline.set_state(Gst.State.NULL)
         self.pipeline = None
         self.webrtc = None
+        self.ice = None
         self.screen = None
         self.control = None
 
