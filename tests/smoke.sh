@@ -49,6 +49,7 @@ if grep -R -E -q 'Authorization|token-file|load_token' server web scripts; then
   exit 1
 fi
 grep -q 'rockchip-mpp-dev' debian/control
+grep -q 'gir1.2-nice-0.1' debian/control
 grep -q 'wl-clipboard' debian/control
 grep -q 'ubuntu-session' debian/control
 grep -q 'avahi-daemon' debian/control

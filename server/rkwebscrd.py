@@ -25,7 +25,8 @@ import gi
 gi.require_version("Gst", "1.0")
 gi.require_version("GstSdp", "1.0")
 gi.require_version("GstWebRTC", "1.0")
-from gi.repository import Gio, GLib, Gst, GstSdp, GstWebRTC
+gi.require_version("Nice", "0.1")
+from gi.repository import Gio, GLib, Gst, GstSdp, GstWebRTC, Nice
 
 
 LOG = logging.getLogger("rkwebscr")
@@ -501,6 +502,13 @@ class WebRTCSession:
         self.ice.set_property("min-rtp-port", USB_ICE_PORT)
         self.ice.set_property("max-rtp-port", USB_ICE_PORT)
         self.ice.set_property("ice-tcp", True)
+        self.nice_agent = self.ice.get_property("agent")
+        loopback = Nice.Address.new()
+        if (
+            not loopback.set_from_string("127.0.0.1")
+            or not self.nice_agent.add_local_address(loopback)
+        ):
+            raise RuntimeError("Could not enable USB ICE loopback")
         self.video_gate = self.pipeline.get_by_name("video_gate")
         self.audio_gate = self.pipeline.get_by_name("audio_gate")
         output_names = ["video_out"] + (["audio_out"] if c.audio else [])
@@ -590,6 +598,7 @@ class WebRTCSession:
             self.pipeline.set_state(Gst.State.NULL)
         self.pipeline = None
         self.webrtc = None
+        self.nice_agent = None
         self.ice = None
         self.screen = None
         self.control = None
