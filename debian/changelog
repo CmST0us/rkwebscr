@@ -1,3 +1,10 @@
+rkwebscr (0.3.2) unstable; urgency=medium
+
+  * Lock the virtual display, capture, encoder, and playback path to 60 FPS.
+  * Preserve standard GNOME desktop animations while streaming.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 13:35:00 +0800
+
 rkwebscr (0.3.1) unstable; urgency=medium
 
   * Configure the mDNS hostname before Avahi starts.

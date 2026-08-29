@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 - 2026-08-29
+
+- Align the virtual display, PipeWire capture, MPP encoder, and WebRTC stream
+  to a fixed 60 FPS cadence.
+- Keep standard GNOME animations enabled in the headless desktop.
+
 ## 0.3.1 - 2026-08-29
 
 - Configure the `rkwebscr.local` hostname before Avahi starts so queries are
