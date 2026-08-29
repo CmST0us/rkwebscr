@@ -508,8 +508,7 @@ int main(int argc, char **argv) {
     spa_pod_frame object;
     spa_rectangle size = SPA_RECTANGLE(static_cast<uint32_t>(state.width),
                                        static_cast<uint32_t>(state.height));
-    spa_fraction variable_rate = SPA_FRACTION(0, 1);
-    spa_fraction max_rate =
+    spa_fraction capture_rate =
         SPA_FRACTION(static_cast<uint32_t>(state.capture_fps), 1);
     spa_pod_builder_push_object(&builder, &object, SPA_TYPE_OBJECT_Format,
                                 SPA_PARAM_EnumFormat);
@@ -523,8 +522,8 @@ int main(int argc, char **argv) {
     spa_pod_builder_long(&builder, DRM_FORMAT_MOD_LINEAR);
     spa_pod_builder_add(&builder,
                         SPA_FORMAT_VIDEO_size, SPA_POD_Rectangle(&size),
-                        SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&variable_rate),
-                        SPA_FORMAT_VIDEO_maxFramerate, SPA_POD_Fraction(&max_rate),
+                        SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&capture_rate),
+                        SPA_FORMAT_VIDEO_maxFramerate, SPA_POD_Fraction(&capture_rate),
                         0);
     const spa_pod *format = static_cast<const spa_pod *>(
         spa_pod_builder_pop(&builder, &object));
@@ -543,7 +542,7 @@ int main(int argc, char **argv) {
     }
 
     std::fprintf(stderr,
-                 "rkwebscr-dmabuf: requesting linear DMA-BUF %dx%d, max %d fps\n",
+                 "rkwebscr-dmabuf: requesting linear DMA-BUF %dx%d at %d fps\n",
                  state.width, state.height, state.capture_fps);
     pw_main_loop_run(state.loop);
     pw_stream_destroy(state.stream);

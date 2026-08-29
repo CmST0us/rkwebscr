@@ -13,7 +13,12 @@ grep -q 'encode_put_frame' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'opusenc' server/rkwebscrd.py
 grep -q 'ConnectToEIS' server/rkwebscrd.py
 grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
-grep -q 'RKWEBSCR_CAPTURE_FPS=64' systemd/rkwebscr.service
+grep -q 'RKWEBSCR_CAPTURE_FPS=60' systemd/rkwebscr.service
+grep -q 'SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&capture_rate)' native/rkwebscr-dmabuf-encoder.cpp
+if grep -q 'disable-animations' server/rkwebscrd.py; then
+  printf '%s\n' 'GNOME animations disabled' >&2
+  exit 1
+fi
 grep -q '/usr/bin/rkwebscrd' systemd/rkwebscr.service
 grep -q 'RTCPeerConnection' web/app.js
 grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.service

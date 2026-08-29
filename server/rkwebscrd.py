@@ -293,7 +293,6 @@ class MutterSession:
         )
         properties = {
             "remote-desktop-session-id": GLib.Variant("s", session_id),
-            "disable-animations": GLib.Variant("b", True),
         }
         result = screen.call_sync(
             "CreateSession",
