@@ -1,3 +1,10 @@
+rkwebscr (0.4.1) unstable; urgency=medium
+
+  * Remove the ADB-forwarded USB transport and use normal LAN ICE candidates.
+  * Keep the backend on loopback behind the public port 80 socket proxy.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 21:55:00 +0800
+
 rkwebscr (0.4.0) unstable; urgency=medium
 
   * Forward browser microphone audio into GNOME through a PipeWire source.

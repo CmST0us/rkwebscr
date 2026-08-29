@@ -13,8 +13,11 @@ grep -q 'encode_put_frame' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'superseded' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'MPP_ENC_SET_IDR_FRAME' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'send_signal(signal.SIGUSR1)' server/rkwebscrd.py
-grep -q 'USB_ICE_PORT = 8090' server/rkwebscrd.py
-grep -q 'X-Rkwebscr-Transport' web/app.js
+grep -q 'ICE_PORT = 8090' server/rkwebscrd.py
+if grep -R -E -q 'USB_ICE|X-Rkwebscr-Transport|adb forward|18080' server web scripts README.md; then
+  printf '%s\n' 'USB transport code found' >&2
+  exit 1
+fi
 grep -q 'opusenc' server/rkwebscrd.py
 grep -q 'rtpopusdepay' server/rkwebscrd.py
 grep -q 'rkwebscr_microphone' server/rkwebscrd.py
@@ -49,8 +52,8 @@ grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.servic
 grep -q 'GNOME_SHELL_SESSION_MODE=ubuntu' systemd/rkwebscr-headless.service
 grep -q 'XDG_CURRENT_DESKTOP=ubuntu:GNOME' systemd/rkwebscr.service
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.4.0)' debian/changelog
-grep -q 'server_version = "rkwebscr/0.4.0"' server/rkwebscrd.py
+grep -q '^rkwebscr (0.4.1)' debian/changelog
+grep -q 'server_version = "rkwebscr/0.4.1"' server/rkwebscrd.py
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
@@ -62,7 +65,6 @@ if grep -R -E -q 'Authorization|token-file|load_token' server web scripts; then
   exit 1
 fi
 grep -q 'rockchip-mpp-dev' debian/control
-grep -q 'gir1.2-nice-0.1' debian/control
 grep -q 'wl-clipboard' debian/control
 grep -q 'ubuntu-session' debian/control
 grep -q 'avahi-daemon' debian/control
@@ -92,14 +94,4 @@ sh -n scripts/rkwebscr-setup
 sh -n debian/postinst
 sh -n debian/prerm
 sh -n debian/postrm
-if python3 -c 'import gi' >/dev/null 2>&1; then
-  PYTHONPATH=. python3 - <<'PY'
-from server.rkwebscrd import usb_sdp_offer
-
-sdp = "v=0\r\na=candidate:1 1 UDP 1 192.168.1.2 5000 typ host\r\na=candidate:2 1 TCP 1 192.168.1.2 6000 typ host tcptype passive\r\n"
-offer = usb_sdp_offer(sdp)
-assert " UDP " not in offer
-assert " TCP 1 127.0.0.1 8090 typ host tcptype passive" in offer
-PY
-fi
 printf '%s\n' 'smoke checks passed'

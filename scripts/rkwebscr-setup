@@ -11,8 +11,8 @@ systemctl --user enable --now rkwebscr-headless.service rkwebscr.service
 
 address=$(hostname -I 2>/dev/null | awk '{print $1}')
 printf 'rkwebscr is ready.\n'
-printf '%s\n' 'Local: http://127.0.0.1:8080/'
-printf '%s\n' 'mDNS:  http://rkwebscr.local:8080/'
+printf '%s\n' 'Local: http://127.0.0.1/'
+printf '%s\n' 'mDNS:  http://rkwebscr.local/'
 if [ -n "$address" ]; then
-  printf 'LAN:   http://%s:8080/\n' "$address"
+  printf 'LAN:   http://%s/\n' "$address"
 fi

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 - 2026-08-29
+
+- Remove the ADB-forwarded USB transport and use normal LAN ICE candidates.
+- Expose HTTP on port 80 while keeping the application backend on loopback.
+
 ## 0.4.0 - 2026-08-29
 
 - Forward the browser microphone to a PipeWire source selected as GNOME's default input.

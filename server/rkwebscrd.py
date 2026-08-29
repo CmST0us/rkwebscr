@@ -24,36 +24,13 @@ import gi
 gi.require_version("Gst", "1.0")
 gi.require_version("GstSdp", "1.0")
 gi.require_version("GstWebRTC", "1.0")
-gi.require_version("Nice", "0.1")
-from gi.repository import Gio, GLib, Gst, GstSdp, GstWebRTC, Nice
+from gi.repository import Gio, GLib, Gst, GstSdp, GstWebRTC
 
 
 LOG = logging.getLogger("rkwebscr")
 MUTTER_REMOTE_DESKTOP = "org.gnome.Mutter.RemoteDesktop"
 MUTTER_SCREEN_CAST = "org.gnome.Mutter.ScreenCast"
-USB_ICE_PORT = 8090
-
-
-def usb_sdp_offer(sdp: str) -> str:
-    lines = []
-    found = False
-    for line in sdp.splitlines():
-        if not line.startswith("a=candidate:"):
-            lines.append(line)
-            continue
-        fields = line.split()
-        if (
-            len(fields) >= 10
-            and fields[2].upper() == "TCP"
-            and ":" not in fields[4]
-            and fields[-2:] == ["tcptype", "passive"]
-        ):
-            fields[4:6] = ["127.0.0.1", str(USB_ICE_PORT)]
-            lines.append(" ".join(fields))
-            found = True
-    if not found:
-        raise RuntimeError("USB ICE-TCP candidate is unavailable")
-    return "\r\n".join(lines) + "\r\n"
+ICE_PORT = 8090
 
 
 def pipewire_default_node(alias: str) -> str | None:
@@ -541,16 +518,8 @@ class WebRTCSession:
         self.pipeline = Gst.parse_launch(desc)
         self.webrtc = self.pipeline.get_by_name("webrtc")
         self.ice = self.webrtc.get_property("ice-agent")
-        self.ice.set_property("min-rtp-port", USB_ICE_PORT)
-        self.ice.set_property("max-rtp-port", USB_ICE_PORT)
-        self.ice.set_property("ice-tcp", True)
-        self.nice_agent = self.ice.get_property("agent")
-        loopback = Nice.Address.new()
-        if (
-            not loopback.set_from_string("127.0.0.1")
-            or not self.nice_agent.add_local_address(loopback)
-        ):
-            raise RuntimeError("Could not enable USB ICE loopback")
+        self.ice.set_property("min-rtp-port", ICE_PORT)
+        self.ice.set_property("max-rtp-port", ICE_PORT)
         self.video_gate = self.pipeline.get_by_name("video_gate")
         self.audio_gate = self.pipeline.get_by_name("audio_gate")
         output_names = ["video_out"] + (["audio_out"] if c.audio else [])
@@ -608,7 +577,6 @@ class WebRTCSession:
             self.pipeline.set_state(Gst.State.NULL)
         self.pipeline = None
         self.webrtc = None
-        self.nice_agent = None
         self.ice = None
         self.screen = None
         self.microphone = None
@@ -879,7 +847,7 @@ class NativeEncoder:
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    server_version = "rkwebscr/0.4.0"
+    server_version = "rkwebscr/0.4.1"
 
     @property
     def app(self) -> "Application":
@@ -895,8 +863,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             if path == "/api/offer":
-                usb = self.headers.get("X-Rkwebscr-Transport") == "usb"
-                offer = self.app.create_offer(usb)
+                offer = self.app.create_offer()
                 return self._json(HTTPStatus.OK, {"type": "offer", "sdp": offer})
             if path == "/api/answer":
                 body = self._read_json()
@@ -1091,14 +1058,13 @@ class Application:
             "transport": "WebRTC",
         }
 
-    def create_offer(self, usb: bool = False) -> str:
+    def create_offer(self) -> str:
         if not self.webrtc:
             raise RuntimeError("Screen capture is still starting")
         if self.webrtc._offer_sdp is not None:
             self.webrtc.close()
             self.webrtc = WebRTCSession(self, self._node_id)
-        offer = self.webrtc.create_offer()
-        return usb_sdp_offer(offer) if usb else offer
+        return self.webrtc.create_offer()
 
     def set_answer(self, answer: str) -> None:
         if not self.webrtc:
@@ -1111,7 +1077,7 @@ def parse_args():
     installed_web = Path("/usr/share/rkwebscr/web")
     installed_encoder = Path("/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder")
     parser = argparse.ArgumentParser()
-    parser.add_argument("--bind", default="0.0.0.0")
+    parser.add_argument("--bind", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
