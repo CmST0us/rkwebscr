@@ -49,15 +49,19 @@ grep -q 'RTCPeerConnection' web/app.js
 grep -q 'totalSquaredInterFrameDelay' web/app.js
 grep -q '>Cadence<' web/index.html
 grep -q '>Dropped<' web/index.html
-grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.service
+grep -q -- '--headless --wayland --mode=user' systemd/rkwebscr-headless.service
 grep -q '^Wants=graphical-session.target$' systemd/rkwebscr-headless.service
 grep -q '^Before=graphical-session.target$' systemd/rkwebscr-headless.service
 grep -q '^PartOf=graphical-session.target$' systemd/rkwebscr-headless.service
-grep -q 'GNOME_SHELL_SESSION_MODE=ubuntu' systemd/rkwebscr-headless.service
-grep -q 'XDG_CURRENT_DESKTOP=ubuntu:GNOME' systemd/rkwebscr.service
+grep -q 'GNOME_SHELL_SESSION_MODE=user' systemd/rkwebscr-headless.service
+grep -q 'XDG_CURRENT_DESKTOP=GNOME' systemd/rkwebscr.service
+if grep -R -E -q 'ubuntu:GNOME|SESSION_MODE=ubuntu|mode=ubuntu|xdg-ubuntu' systemd; then
+  printf '%s\n' 'Ubuntu session configuration found' >&2
+  exit 1
+fi
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.4.2)' debian/changelog
-grep -q 'server_version = "rkwebscr/0.4.2"' server/rkwebscrd.py
+grep -q '^rkwebscr (0.4.3)' debian/changelog
+grep -q 'server_version = "rkwebscr/0.4.3"' server/rkwebscrd.py
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
@@ -70,7 +74,12 @@ if grep -R -E -q 'Authorization|token-file|load_token' server web scripts; then
 fi
 grep -q 'rockchip-mpp-dev' debian/control
 grep -q 'wl-clipboard' debian/control
-grep -q 'ubuntu-session' debian/control
+grep -q '^ gnome-session,$' debian/control
+grep -q '^ gnome-shell$' debian/control
+if grep -E -q 'ubuntu-session|gnome-shell-extension-ubuntu' debian/control; then
+  printf '%s\n' 'Ubuntu session dependency found' >&2
+  exit 1
+fi
 grep -q 'avahi-daemon' debian/control
 grep -q '_rkwebscr._tcp' avahi/rkwebscr.service
 grep -q '<port>80</port>' avahi/rkwebscr.service

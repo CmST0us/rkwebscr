@@ -7,7 +7,7 @@ ROCK 5B 上测试。
 
 ## 功能特性
 
-- 使用 Mutter `RecordVirtual` 创建 Ubuntu GNOME 无头桌面，无需连接 HDMI
+- 使用 Mutter `RecordVirtual` 创建原生 GNOME 无头桌面，无需连接 HDMI
 - 通过 PipeWire 以线性 DMA-BUF 捕获画面
 - 使用 Rockchip MPP 硬件编码 H.264
 - 支持双向 Opus 音频：桌面声音传到浏览器，浏览器麦克风传回 GNOME
@@ -69,7 +69,7 @@ make deb
 ```
 
 `dpkg-buildpackage` 会按照 Debian 的常规目录结构，把
-`rkwebscr_0.4.2_<架构>.deb` 写入项目的上一级目录。
+`rkwebscr_0.4.3_<架构>.deb` 写入项目的上一级目录。
 
 ## 安装路径
 
@@ -94,7 +94,7 @@ DEB 安装包遵循 Ubuntu 的标准文件系统布局：
 以下示例假定桌面用户为 `flange`。先安装 DEB，并允许 `flange` 访问视频设备：
 
 ```bash
-sudo apt install ../rkwebscr_0.4.2_arm64.deb
+sudo apt install ../rkwebscr_0.4.3_arm64.deb
 sudo usermod -aG video flange
 ```
 
@@ -106,6 +106,9 @@ sudo loginctl enable-linger flange
 ```
 
 修改用户组后需要重新登录或重启设备，新的权限才会生效。
+
+rkwebscr 使用 GNOME Shell 的原生 `user` 会话模式，不依赖 `ubuntu-session`
+或 Ubuntu 专用的 Shell 扩展。
 
 GNOME Remote Desktop 不能与 rkwebscr 同时创建虚拟显示器。如果当前登录的
 就是 `flange`，请关闭该服务，然后运行初始化脚本：

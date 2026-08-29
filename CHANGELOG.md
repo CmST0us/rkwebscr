@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.3 - 2026-08-30
+
+- Switch the headless desktop from the Ubuntu session profile to native GNOME
+  Shell user mode.
+- Replace Ubuntu session and extension dependencies with GNOME Session and
+  GNOME Shell.
+
 ## 0.4.2 - 2026-08-30
 
 - Tie the headless shell to `graphical-session.target` so GNOME portal services

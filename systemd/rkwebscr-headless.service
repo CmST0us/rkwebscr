@@ -7,12 +7,12 @@ PartOf=graphical-session.target
 [Service]
 Type=simple
 Environment=XDG_SESSION_TYPE=wayland
-Environment=XDG_CURRENT_DESKTOP=ubuntu:GNOME
-Environment=XDG_SESSION_DESKTOP=ubuntu
-Environment=DESKTOP_SESSION=ubuntu
-Environment=GNOME_SHELL_SESSION_MODE=ubuntu
-Environment=XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
-ExecStart=/usr/bin/gnome-shell --headless --wayland --mode=ubuntu
+Environment=XDG_CURRENT_DESKTOP=GNOME
+Environment=XDG_SESSION_DESKTOP=gnome
+Environment=DESKTOP_SESSION=gnome
+Environment=GNOME_SHELL_SESSION_MODE=user
+Environment=XDG_CONFIG_DIRS=/etc/xdg
+ExecStart=/usr/bin/gnome-shell --headless --wayland --mode=user
 Restart=on-failure
 RestartSec=2
 
