@@ -68,7 +68,7 @@ Build the Debian binary package:
 make deb
 ```
 
-`dpkg-buildpackage` writes `rkwebscr_0.3.6_<architecture>.deb` to the parent
+`dpkg-buildpackage` writes `rkwebscr_0.3.7_<architecture>.deb` to the parent
 directory, following normal Debian source-package conventions.
 
 ## Installed files
@@ -94,7 +94,7 @@ The Debian package uses the standard Ubuntu filesystem layout:
 Install the package and enable lingering for the desktop user:
 
 ```bash
-sudo apt install ../rkwebscr_0.3.6_arm64.deb
+sudo apt install ../rkwebscr_0.3.7_arm64.deb
 sudo usermod -aG video "$USER"
 sudo loginctl enable-linger "$USER"
 ```

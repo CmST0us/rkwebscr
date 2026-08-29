@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.7 - 2026-08-29
+
+- Correct FrameSmoother clock drift with single-refresh phase adjustments
+  instead of periodic full-frame holds or drops.
+
 ## 0.3.6 - 2026-08-29
 
 - Carry WebRTC media over ADB-forwarded ICE-TCP when the page is opened on

@@ -42,8 +42,8 @@ grep -q -- '--headless --wayland --mode=ubuntu' systemd/rkwebscr-headless.servic
 grep -q 'GNOME_SHELL_SESSION_MODE=ubuntu' systemd/rkwebscr-headless.service
 grep -q 'XDG_CURRENT_DESKTOP=ubuntu:GNOME' systemd/rkwebscr.service
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.3.6)' debian/changelog
-grep -q 'server_version = "rkwebscr/0.3.6"' server/rkwebscrd.py
+grep -q '^rkwebscr (0.3.7)' debian/changelog
+grep -q 'server_version = "rkwebscr/0.3.7"' server/rkwebscrd.py
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then

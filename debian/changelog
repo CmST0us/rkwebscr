@@ -1,3 +1,9 @@
+rkwebscr (0.3.7) unstable; urgency=medium
+
+  * Slew browser frame pacing at buffer limits instead of skipping frames.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 17:50:38 +0800
+
 rkwebscr (0.3.6) unstable; urgency=medium
 
   * Carry WebRTC media over ADB-forwarded ICE-TCP when accessed on localhost.
