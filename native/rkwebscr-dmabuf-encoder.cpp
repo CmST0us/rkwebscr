@@ -299,6 +299,7 @@ struct State {
     int fps;
     int capture_fps;
     uint64_t frames = 0;
+    uint64_t superseded = 0;
     std::chrono::steady_clock::time_point stats_at = std::chrono::steady_clock::now();
 
     ~State() {
@@ -359,8 +360,10 @@ void on_process(void *data) {
     pw_buffer *buffer = nullptr;
     pw_buffer *next = nullptr;
     while ((next = pw_stream_dequeue_buffer(self->stream))) {
-        if (buffer)
+        if (buffer) {
+            self->superseded++;
             pw_stream_queue_buffer(self->stream, buffer);
+        }
         buffer = next;
     }
     if (!buffer)
@@ -432,10 +435,11 @@ void on_process(void *data) {
         static uint64_t previous = 0;
         uint64_t encoded = self->encoder->encoded.load();
         std::fprintf(stderr,
-                     "rkwebscr-dmabuf: %.1f fps, %llu encoded, %llu dropped, %llu failed\n",
+                     "rkwebscr-dmabuf: %.1f fps, %llu encoded, %llu dropped, %llu superseded, %llu failed\n",
                      (encoded - previous) / seconds,
                      static_cast<unsigned long long>(encoded),
                      static_cast<unsigned long long>(self->encoder->dropped.load()),
+                     static_cast<unsigned long long>(self->superseded),
                      static_cast<unsigned long long>(self->encoder->failed.load()));
         previous = encoded;
         self->stats_at = now;
