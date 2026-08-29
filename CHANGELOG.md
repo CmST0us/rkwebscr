@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3 - 2026-08-29
+
+- Report browser frame cadence, jitter, dropped frames, and freezes in the
+  connection drawer.
+
 ## 0.3.2 - 2026-08-29
 
 - Keep standard GNOME animations enabled in the headless desktop.

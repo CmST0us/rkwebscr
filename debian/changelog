@@ -1,3 +1,9 @@
+rkwebscr (0.3.3) unstable; urgency=medium
+
+  * Report browser frame cadence, jitter, drops, and freezes.
+
+ -- Eric Wu <eric3u@outlook.com>  Sat, 29 Aug 2026 13:45:00 +0800
+
 rkwebscr (0.3.2) unstable; urgency=medium
 
   * Preserve standard GNOME desktop animations while streaming.
