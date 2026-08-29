@@ -627,12 +627,12 @@ class WebRTCSession:
                 ["wl-copy", "--type", "text/plain;charset=utf-8"],
                 input=text.encode("utf-8"),
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
                 timeout=3,
                 check=False,
             )
             if result.returncode:
-                raise RuntimeError(result.stderr.decode("utf-8", "replace").strip())
+                raise RuntimeError(f"wl-copy exited with status {result.returncode}")
             reply = {"t": "clipboard-set-result", "ok": True}
         except (OSError, subprocess.TimeoutExpired, RuntimeError) as error:
             reply = {"t": "clipboard-set-result", "ok": False, "error": str(error)[:160]}

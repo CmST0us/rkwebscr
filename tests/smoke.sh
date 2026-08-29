@@ -32,6 +32,7 @@ grep -q 'rockchip-mpp-dev' debian/control
 grep -q 'wl-clipboard' debian/control
 grep -q 'clipboard-set' server/rkwebscrd.py
 grep -q 'wl-copy' server/rkwebscrd.py
+grep -q 'stderr=subprocess.DEVNULL' server/rkwebscrd.py
 grep -q 'clipboardDialog' web/app.js
 grep -q 'clipboardDialog' web/index.html
 test -f LICENSE
