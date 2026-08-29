@@ -1,0 +1,6 @@
+rkstream (0.1.0) unstable; urgency=medium
+
+  * Initial Debian package.
+
+ -- rkstream contributors <rkstream@example.invalid>  Sat, 29 Aug 2026 00:00:00 +0800
+

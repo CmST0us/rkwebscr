@@ -865,6 +865,8 @@ def load_token(path: Path) -> str:
 
 def parse_args():
     root = Path(__file__).resolve().parents[1]
+    installed_web = Path("/usr/share/rkstream/web")
+    installed_encoder = Path("/usr/libexec/rkstream/rkstream-dmabuf-encoder")
     parser = argparse.ArgumentParser()
     parser.add_argument("--bind", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
@@ -874,11 +876,18 @@ def parse_args():
     parser.add_argument("--bitrate", type=int, default=12_000_000)
     parser.add_argument("--audio-target", default="")
     parser.add_argument("--no-audio", action="store_true")
-    parser.add_argument("--web-root", default=str(root / "web"))
+    parser.add_argument(
+        "--web-root",
+        default=str(installed_web if installed_web.is_dir() else root / "web"),
+    )
     parser.add_argument("--token-file", default="~/.config/rkstream/token")
     parser.add_argument(
         "--encoder-bridge",
-        default=str(root / "native" / "rkstream-dmabuf-encoder"),
+        default=str(
+            installed_encoder
+            if installed_encoder.is_file()
+            else root / "native" / "rkstream-dmabuf-encoder"
+        ),
     )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()

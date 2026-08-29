@@ -1,4 +1,4 @@
-.PHONY: all native check clean
+.PHONY: all native check clean deb
 
 all: native
 
@@ -11,3 +11,5 @@ check:
 clean:
 	$(MAKE) -C native clean
 
+deb:
+	dpkg-buildpackage --build=binary --no-sign

@@ -1,0 +1,50 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/buildflags.mk
+include /usr/share/dpkg/pkg-info.mk
+
+PACKAGE := rkstream
+PACKAGE_DIR := debian/$(PACKAGE)
+DEB_FILE := ../$(PACKAGE)_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
+
+.PHONY: clean build build-arch build-indep binary binary-arch binary-indep
+
+clean:
+	$(MAKE) -C native clean
+	rm -rf $(PACKAGE_DIR) debian/files debian/$(PACKAGE).substvars
+
+build: build-arch build-indep
+
+build-arch:
+	$(MAKE) -C native CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS) -std=gnu++20 -Wall -Wextra" LDFLAGS="$(LDFLAGS)"
+
+build-indep:
+
+binary: binary-arch binary-indep
+
+binary-arch: build-arch
+	rm -rf $(PACKAGE_DIR)
+	install -d $(PACKAGE_DIR)/DEBIAN \
+		$(PACKAGE_DIR)/usr/bin \
+		$(PACKAGE_DIR)/usr/libexec/rkstream \
+		$(PACKAGE_DIR)/usr/share/rkstream/web \
+		$(PACKAGE_DIR)/usr/share/doc/$(PACKAGE) \
+		$(PACKAGE_DIR)/usr/lib/systemd/user \
+		$(PACKAGE_DIR)/usr/lib/udev/rules.d
+	install -m 0755 server/rkstreamd.py $(PACKAGE_DIR)/usr/bin/rkstreamd
+	install -m 0755 native/rkstream-dmabuf-encoder $(PACKAGE_DIR)/usr/libexec/rkstream/
+	install -m 0755 scripts/rkstream-setup $(PACKAGE_DIR)/usr/bin/
+	install -m 0644 web/index.html web/app.js web/styles.css $(PACKAGE_DIR)/usr/share/rkstream/web/
+	install -m 0644 systemd/*.service $(PACKAGE_DIR)/usr/lib/systemd/user/
+	install -m 0644 udev/99-rkstream-rockchip.rules $(PACKAGE_DIR)/usr/lib/udev/rules.d/
+	install -m 0644 README.md LICENSE $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/
+	gzip -9nc debian/changelog > $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
+	dpkg-shlibdeps -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/libexec/rkstream/rkstream-dmabuf-encoder
+	dpkg-gencontrol -p$(PACKAGE) -P$(PACKAGE_DIR) -Tdebian/$(PACKAGE).substvars
+	cp debian/postinst $(PACKAGE_DIR)/DEBIAN/postinst
+	chmod 0755 $(PACKAGE_DIR)/DEBIAN/postinst
+	dpkg-deb --build --root-owner-group $(PACKAGE_DIR) $(DEB_FILE)
+
+binary-indep:
+

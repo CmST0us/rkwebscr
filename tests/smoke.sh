@@ -13,7 +13,11 @@ grep -q 'opusenc' server/rkstreamd.py
 grep -q 'ConnectToEIS' server/rkstreamd.py
 grep -q 'ei_device_keyboard_key' server/rkstreamd.py
 grep -q 'RKSTREAM_CAPTURE_FPS=64' systemd/rkstream.service
+grep -q '/usr/bin/rkstreamd' systemd/rkstream.service
 grep -q 'RTCPeerConnection' web/app.js
 grep -q -- '--headless --wayland' systemd/rkstream-headless.service
+grep -q '^Package: rkstream' debian/control
+grep -q 'dpkg-deb --build' debian/rules
+sh -n scripts/rkstream-setup
+sh -n debian/postinst
 printf '%s\n' 'smoke checks passed'
-
