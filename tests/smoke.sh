@@ -16,8 +16,8 @@ grep -q 'send_signal(signal.SIGUSR1)' server/rkwebscrd.py
 grep -q 'opusenc' server/rkwebscrd.py
 grep -q 'ConnectToEIS' server/rkwebscrd.py
 grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
-grep -q 'target=self._pace_frames' server/rkwebscrd.py
-grep -q 'len(self._frame_queue) >= 3' server/rkwebscrd.py
+grep -q 'max-buffers=3' server/rkwebscrd.py
+grep -q 'clocksync sync=true sync-to-first=true' server/rkwebscrd.py
 grep -q 'RKWEBSCR_CAPTURE_FPS=64' systemd/rkwebscr.service
 grep -q 'SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&variable_rate)' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'SPA_FORMAT_VIDEO_maxFramerate, SPA_POD_Fraction(&max_rate)' native/rkwebscr-dmabuf-encoder.cpp
