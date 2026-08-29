@@ -10,6 +10,7 @@ LAN. It is tested on Radxa ROCK 5B with Ubuntu 24.04 and GNOME 46.
 - PipeWire linear DMA-BUF capture
 - Rockchip MPP H.264 hardware encoding
 - Opus system audio and WebRTC transport
+- Display-refresh-aligned browser rendering with a bounded frame buffer
 - Keyboard, absolute mouse, relative mouse, and wheel input through libei
 - Bidirectional text clipboard transfer through Wayland
 - `rkwebscr.local` mDNS hostname and DNS-SD service discovery
@@ -25,6 +26,10 @@ Python owns the Mutter D-Bus sessions, input validation, WebRTC negotiation,
 and HTTP server. The C++ bridge owns DMA-BUF capture, pixel conversion, and MPP
 encoding. GStreamer handles WebRTC RTP and Opus audio. The package does not
 replace or modify an existing GStreamer installation.
+
+Modern browsers use a six-frame `ImageBitmap` queue for the final presentation
+step. This trades a small amount of local latency for stable display cadence;
+browsers without the required APIs fall back to the native video element.
 
 ## Repository layout
 

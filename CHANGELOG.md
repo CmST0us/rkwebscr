@@ -6,6 +6,8 @@
   localhost, while preserving normal LAN WebRTC behavior.
 - Pin tested RK3588 clocks below the unstable all-domain maximum for smooth
   60 FPS rendering.
+- Align browser presentation to the local display refresh with a bounded
+  `ImageBitmap` frame buffer, avoiding clustered frame-time stalls.
 
 ## 0.3.5 - 2026-08-29
 
