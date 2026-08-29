@@ -107,7 +107,8 @@ async function connect() {
     stream = new MediaStream();
     elements.video.srcObject = stream;
 
-    peer.ontrack = ({ track }) => {
+    peer.ontrack = ({ track, receiver }) => {
+      if ("jitterBufferTarget" in receiver) receiver.jitterBufferTarget = 20;
       stream.addTrack(track);
       elements.video.play().catch(() => {});
     };
