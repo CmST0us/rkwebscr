@@ -130,11 +130,12 @@ blocks its Clipboard API.
 
 ## Configuration
 
-The packaged defaults are 1280x720, fixed 60 FPS, 6 Mbps CBR, and one-second GOP.
+The packaged defaults are 1280x720, 60 FPS, 6 Mbps CBR, and one-second GOP.
 Override the service with `systemctl --user edit rkwebscr.service` when another
 resolution or bitrate is needed. `RKWEBSCR_CAPTURE_FPS` is the display-clock
 calibration knob; keep it equal to the output FPS unless the display hardware
-requires a measured override.
+requires a measured override. Mutter emits frames only when pixels change, with
+this value as its refresh-rate ceiling.
 
 Useful commands:
 
