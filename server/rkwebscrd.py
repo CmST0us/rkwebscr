@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import deque
 import ctypes
 import json
 import logging
@@ -434,9 +435,15 @@ class WebRTCSession:
         self.screen: Gst.Element | None = None
         self.control = None
         self.started_ns = time.monotonic_ns()
+        self._frame_duration = Gst.SECOND // app.config.fps
+        self._frame_queue: deque[bytes] = deque()
+        self._frame_ready = threading.Condition()
+        self._pacer_stopping = False
         self._offer_event: threading.Event | None = None
         self._offer_sdp: str | None = None
         self._build_pipeline()
+        self._pacer = threading.Thread(target=self._pace_frames, daemon=True)
+        self._pacer.start()
 
     def _build_pipeline(self) -> None:
         c = self.app.config
@@ -506,15 +513,52 @@ class WebRTCSession:
         LOG.info("GStreamer pipeline started: %dx%d@%d, %d bps", c.width, c.height, c.fps, c.bitrate)
 
     def push_frame(self, data: bytes) -> None:
+        with self._frame_ready:
+            while len(self._frame_queue) >= 3 and not self._pacer_stopping:
+                self._frame_ready.wait()
+            if self._pacer_stopping:
+                return
+            self._frame_queue.append(data)
+            self._frame_ready.notify()
+
+    def _pace_frames(self) -> None:
+        deadline = 0
+        while True:
+            with self._frame_ready:
+                while not self._frame_queue and not self._pacer_stopping:
+                    deadline = 0
+                    self._frame_ready.wait()
+                if self._pacer_stopping:
+                    return
+                if not deadline:
+                    deadline = time.monotonic_ns() + self._frame_duration
+                remaining = deadline - time.monotonic_ns()
+                if remaining > 0:
+                    self._frame_ready.wait(remaining / Gst.SECOND)
+                    continue
+                data = self._frame_queue.popleft()
+                self._frame_ready.notify_all()
+
+            self._emit_frame(data, max(0, deadline - self.started_ns))
+            now = time.monotonic_ns()
+            deadline += self._frame_duration
+            if deadline < now - self._frame_duration:
+                deadline = now + self._frame_duration
+
+    def _emit_frame(self, data: bytes, pts: int) -> None:
         if not self.screen:
             return
         buffer = Gst.Buffer.new_allocate(None, len(data), None)
         buffer.fill(0, data)
-        buffer.pts = buffer.dts = time.monotonic_ns() - self.started_ns
-        buffer.duration = Gst.SECOND // self.app.config.fps
+        buffer.pts = buffer.dts = pts
+        buffer.duration = self._frame_duration
         self.screen.emit("push-buffer", buffer)
 
     def close(self) -> None:
+        with self._frame_ready:
+            self._pacer_stopping = True
+            self._frame_ready.notify_all()
+        self._pacer.join(timeout=2)
         if self.pipeline:
             self.pipeline.set_state(Gst.State.NULL)
         self.pipeline = None
