@@ -65,9 +65,10 @@ let stream = null;
 let keyboardCapture = true;
 let metricsTimer = null;
 let lastStats = null;
-let moveFrame = 0;
+let moveTimer = 0;
 let frameSmoother = null;
 let pendingMove = { dx: 0, dy: 0 };
+let pendingPosition = null;
 const downKeys = new Set();
 
 async function api(path, options = {}) {
@@ -224,6 +225,10 @@ function updateConnectionState() {
 function closePeer() {
   stopFrameSmoother();
   releaseKeys();
+  if (moveTimer) clearTimeout(moveTimer);
+  moveTimer = 0;
+  pendingMove = { dx: 0, dy: 0 };
+  pendingPosition = null;
   if (document.pointerLockElement) document.exitPointerLock();
   if (metricsTimer) clearInterval(metricsTimer);
   metricsTimer = null;
@@ -338,12 +343,18 @@ function send(message) {
 function scheduleRelativeMove(dx, dy) {
   pendingMove.dx += dx;
   pendingMove.dy += dy;
-  if (moveFrame) return;
-  moveFrame = requestAnimationFrame(() => {
-    moveFrame = 0;
+  schedulePointerMove();
+}
+
+function schedulePointerMove() {
+  if (moveTimer) return;
+  moveTimer = setTimeout(() => {
+    moveTimer = 0;
     if (pendingMove.dx || pendingMove.dy) send({ t: "m", ...pendingMove });
     pendingMove = { dx: 0, dy: 0 };
-  });
+    if (pendingPosition) send({ t: "p", ...pendingPosition });
+    pendingPosition = null;
+  }, 1000 / (status?.video.fps || 60));
 }
 
 function remoteCoordinates(event) {
@@ -368,7 +379,10 @@ function onMouseMove(event) {
     scheduleRelativeMove(event.movementX, event.movementY);
   } else {
     const point = remoteCoordinates(event);
-    if (point) send({ t: "p", ...point });
+    if (point) {
+      pendingPosition = point;
+      schedulePointerMove();
+    }
   }
 }
 
