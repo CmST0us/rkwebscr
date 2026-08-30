@@ -9,6 +9,7 @@ fi
 grep -q 'rkwebscr-dmabuf-encoder' server/rkwebscrd.py
 grep -q 'SPA_DATA_DmaBuf' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'c_RkRgaBlit' native/rkwebscr-dmabuf-encoder.cpp
+grep -q 'DMA_BUF_IOCTL_SYNC' native/rkwebscr-dmabuf-encoder.cpp
 if grep -q 'ARGBToNV12' native/rkwebscr-dmabuf-encoder.cpp; then
   printf '%s\n' 'CPU color conversion found' >&2
   exit 1
@@ -64,8 +65,8 @@ if grep -R -E -q 'ubuntu:GNOME|SESSION_MODE=ubuntu|mode=ubuntu|xdg-ubuntu' syste
   exit 1
 fi
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.4.4)' debian/changelog
-grep -q 'server_version = "rkwebscr/0.4.4"' server/rkwebscrd.py
+grep -q '^rkwebscr (0.4.5)' debian/changelog
+grep -q 'server_version = "rkwebscr/0.4.5"' server/rkwebscrd.py
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then

@@ -8,6 +8,7 @@
 #include <spa/utils/result.h>
 
 #include <drm_fourcc.h>
+#include <linux/dma-buf.h>
 #include <rockchip/rk_mpi.h>
 #include <rockchip/rk_mpi_cmd.h>
 #include <rockchip/rk_venc_cfg.h>
@@ -29,6 +30,7 @@
 #include <deque>
 #include <mutex>
 #include <string>
+#include <sys/ioctl.h>
 #include <thread>
 #include <unistd.h>
 
@@ -376,8 +378,21 @@ void on_process(void *data) {
         pw_stream_queue_buffer(self->stream, buffer);
         return;
     }
-    bool accepted = self->encoder->submit(static_cast<int>(plane.fd), stride,
+    int source_fd = static_cast<int>(plane.fd);
+    dma_buf_sync sync{DMA_BUF_SYNC_START | DMA_BUF_SYNC_READ};
+    if (ioctl(source_fd, DMA_BUF_IOCTL_SYNC, &sync) < 0) {
+        std::fprintf(stderr, "rkwebscr-dmabuf: source sync failed: %s\n",
+                     std::strerror(errno));
+        self->encoder->failed++;
+        pw_stream_queue_buffer(self->stream, buffer);
+        return;
+    }
+    bool accepted = self->encoder->submit(source_fd, stride,
                                           static_cast<int64_t>(self->frames));
+    sync.flags = DMA_BUF_SYNC_END | DMA_BUF_SYNC_READ;
+    if (ioctl(source_fd, DMA_BUF_IOCTL_SYNC, &sync) < 0)
+        std::fprintf(stderr, "rkwebscr-dmabuf: source unsync failed: %s\n",
+                     std::strerror(errno));
     if (accepted)
         self->frames++;
     pw_stream_queue_buffer(self->stream, buffer);

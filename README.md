@@ -69,7 +69,7 @@ make deb
 ```
 
 `dpkg-buildpackage` 会按照 Debian 的常规目录结构，把
-`rkwebscr_0.4.4_<架构>.deb` 写入项目的上一级目录。
+`rkwebscr_0.4.5_<架构>.deb` 写入项目的上一级目录。
 
 ## 安装路径
 
@@ -94,7 +94,7 @@ DEB 安装包遵循 Ubuntu 的标准文件系统布局：
 以下示例假定桌面用户为 `flange`。先安装 DEB，并允许 `flange` 访问视频设备：
 
 ```bash
-sudo apt install ../rkwebscr_0.4.4_arm64.deb
+sudo apt install ../rkwebscr_0.4.5_arm64.deb
 sudo usermod -aG video flange
 ```
 

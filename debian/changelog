@@ -1,3 +1,9 @@
+rkwebscr (0.4.5) unstable; urgency=medium
+
+  * Synchronize source DMA-BUF access before RGA conversion.
+
+ -- Eric Wu <eric3u@outlook.com>  Sun, 30 Aug 2026 17:45:00 +0800
+
 rkwebscr (0.4.4) unstable; urgency=medium
 
   * Convert PipeWire DMA-BUF frames to NV12 with Rockchip RGA.

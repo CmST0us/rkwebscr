@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.5 - 2026-08-30
+
+- Wait for Mutter to finish writing each source DMA-BUF before RGA reads it,
+  preventing torn frames during motion.
+
 ## 0.4.4 - 2026-08-30
 
 - Convert PipeWire DMA-BUF frames directly into MPP DMA-BUFs with Rockchip
