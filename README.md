@@ -20,7 +20,7 @@ ROCK 5B 上测试。
 视频主链路如下：
 
 ```text
-GNOME/Mutter -> PipeWire DMA-BUF -> GBM 映射 -> libyuv NV12 -> MPP H.264 -> WebRTC -> 浏览器
+GNOME/Mutter -> PipeWire DMA-BUF -> RGA NV12 -> MPP H.264 -> WebRTC -> 浏览器
 ```
 
 Python 服务负责 Mutter D-Bus 会话、输入校验、WebRTC 协商和 HTTP 服务；C++
@@ -52,7 +52,7 @@ tests/           快速检查脚本
 
 ```bash
 sudo apt install build-essential dpkg-dev pkg-config \
-  libpipewire-0.3-dev libdrm-dev libgbm-dev libyuv-dev rockchip-mpp-dev
+  libpipewire-0.3-dev libdrm-dev librga2 rockchip-mpp-dev
 ```
 
 编译原生编码器并运行检查：
@@ -69,7 +69,7 @@ make deb
 ```
 
 `dpkg-buildpackage` 会按照 Debian 的常规目录结构，把
-`rkwebscr_0.4.3_<架构>.deb` 写入项目的上一级目录。
+`rkwebscr_0.4.4_<架构>.deb` 写入项目的上一级目录。
 
 ## 安装路径
 
@@ -94,7 +94,7 @@ DEB 安装包遵循 Ubuntu 的标准文件系统布局：
 以下示例假定桌面用户为 `flange`。先安装 DEB，并允许 `flange` 访问视频设备：
 
 ```bash
-sudo apt install ../rkwebscr_0.4.3_arm64.deb
+sudo apt install ../rkwebscr_0.4.4_arm64.deb
 sudo usermod -aG video flange
 ```
 
@@ -166,9 +166,10 @@ http://rkwebscr.local/
 systemctl --user edit rkwebscr.service
 ```
 
-`RKWEBSCR_CAPTURE_FPS` 用于校准虚拟显示器的刷新时钟。ROCK 5B 默认设为
-66，使编码输出接近稳定的 60 FPS。Mutter 只会在画面发生变化时产生帧，这个
-值是刷新率上限，并不代表静止画面也会持续产生相同帧率。
+`RKWEBSCR_CAPTURE_FPS` 用于校准虚拟显示器的刷新时钟。RGA 在 DMA-BUF 之间
+完成 BGRx 到 NV12 的硬件转换。ROCK 5B 默认设为 63，使 Mutter 的实际输出稳定
+在 60 FPS；编码器和 WebRTC 仍按 60 FPS 工作。Mutter 只会在画面发生变化时
+产生帧，这个值是刷新率上限，并不代表静止画面也会持续产生相同帧率。
 
 安装包会固定 RK3588 的 CPU 和内存频率，并将 GPU 限制在 900 MHz。这套配置
 可以减少帧时间尖峰，同时避开 ROCK 5B 在所有频率拉满时可能出现的不稳定问题。

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.4 - 2026-08-30
+
+- Convert PipeWire DMA-BUF frames directly into MPP DMA-BUFs with Rockchip
+  RGA instead of mapping and converting them on the CPU.
+- Calibrate the virtual display capture clock to 63 FPS for steady 60 FPS
+  output without queue overflow.
+
 ## 0.4.3 - 2026-08-30
 
 - Switch the headless desktop from the Ubuntu session profile to native GNOME

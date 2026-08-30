@@ -8,12 +8,12 @@
 #include <spa/utils/result.h>
 
 #include <drm_fourcc.h>
-#include <gbm.h>
-#include <libyuv.h>
 #include <rockchip/rk_mpi.h>
 #include <rockchip/rk_mpi_cmd.h>
 #include <rockchip/rk_venc_cfg.h>
 #include <rockchip/rk_venc_cmd.h>
+
+#include "vendor/rga/RgaApi.h"
 
 #include <algorithm>
 #include <array>
@@ -26,15 +26,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <fcntl.h>
 #include <deque>
 #include <mutex>
 #include <string>
-#include <sys/ioctl.h>
 #include <thread>
-#include <unordered_map>
 #include <unistd.h>
-#include <linux/dma-buf.h>
 
 namespace {
 
@@ -48,7 +44,7 @@ struct Encoder {
     struct Slot {
         MppBuffer buffer = nullptr;
         MppFrame frame = nullptr;
-        uint8_t *nv12 = nullptr;
+        int fd = -1;
         bool busy = false;
     };
 
@@ -115,6 +111,11 @@ struct Encoder {
         check(api->control(ctx, MPP_ENC_SET_HEADER_MODE, &header_mode),
               "MPP_ENC_SET_HEADER_MODE");
 
+        if (c_RkRgaInit() < 0) {
+            std::fprintf(stderr, "rkwebscr-dmabuf: RGA initialization failed\n");
+            std::exit(1);
+        }
+
         check(mpp_buffer_group_get_internal(&group, MPP_BUFFER_TYPE_DRM),
               "mpp_buffer_group_get_internal");
         size_t size = static_cast<size_t>(stride_width) * stride_height * 3 / 2;
@@ -127,10 +128,10 @@ struct Encoder {
             mpp_frame_set_ver_stride(slot.frame, stride_height);
             mpp_frame_set_fmt(slot.frame, MPP_FMT_YUV420SP);
             mpp_frame_set_buffer(slot.frame, slot.buffer);
-            slot.nv12 = static_cast<uint8_t *>(mpp_buffer_get_ptr(slot.buffer));
-            if (!slot.nv12) {
+            slot.fd = mpp_buffer_get_fd(slot.buffer);
+            if (slot.fd < 0) {
                 std::fprintf(stderr,
-                             "rkwebscr-dmabuf: could not map MPP output buffer\n");
+                             "rkwebscr-dmabuf: could not export MPP output buffer\n");
                 std::exit(1);
             }
         }
@@ -159,9 +160,10 @@ struct Encoder {
             mpp_destroy(ctx);
             ctx = nullptr;
         }
+        c_RkRgaDeInit();
     }
 
-    bool submit(const uint8_t *source, int source_stride, int64_t pts) {
+    bool submit(int source_fd, int source_stride, int64_t pts) {
         size_t index = slots.size();
         {
             std::lock_guard lock(mutex);
@@ -179,14 +181,19 @@ struct Encoder {
         }
 
         Slot &slot = slots[index];
-        mpp_buffer_sync_begin(slot.buffer);
-        int converted = libyuv::ARGBToNV12(
-            source, source_stride, slot.nv12, stride_width,
-            slot.nv12 + static_cast<size_t>(stride_width) * stride_height,
-            stride_width, width, height);
-        mpp_buffer_sync_end(slot.buffer);
-        if (converted != 0) {
-            std::fprintf(stderr, "rkwebscr-dmabuf: libyuv conversion failed: %d\n",
+        rga_info_t source{};
+        rga_info_t destination{};
+        source.fd = source_fd;
+        source.mmuFlag = 1;
+        destination.fd = slot.fd;
+        destination.mmuFlag = 1;
+        rga_set_rect(&source.rect, 0, 0, width, height,
+                     source_stride, height, RK_FORMAT_BGRA_8888);
+        rga_set_rect(&destination.rect, 0, 0, width, height,
+                     stride_width, stride_height, RK_FORMAT_YCbCr_420_SP);
+        int converted = c_RkRgaBlit(&source, &destination, nullptr);
+        if (converted < 0) {
+            std::fprintf(stderr, "rkwebscr-dmabuf: RGA conversion failed: %d\n",
                          converted);
             release(index);
             failed++;
@@ -285,15 +292,6 @@ struct State {
     spa_hook stream_listener{};
     Encoder *encoder = nullptr;
     spa_video_info_raw format{};
-    int drm_fd = -1;
-    gbm_device *gbm = nullptr;
-    struct SourceBuffer {
-        gbm_bo *buffer;
-        uint8_t *mapped;
-        uint32_t stride;
-        void *map_data;
-    };
-    std::unordered_map<int, SourceBuffer> source_buffers;
     int width;
     int height;
     int fps;
@@ -301,18 +299,6 @@ struct State {
     uint64_t frames = 0;
     uint64_t superseded = 0;
     std::chrono::steady_clock::time_point stats_at = std::chrono::steady_clock::now();
-
-    ~State() {
-        for (auto [fd, source] : source_buffers) {
-            (void)fd;
-            gbm_bo_unmap(source.buffer, source.map_data);
-            gbm_bo_destroy(source.buffer);
-        }
-        if (gbm)
-            gbm_device_destroy(gbm);
-        if (drm_fd >= 0)
-            close(drm_fd);
-    }
 };
 
 void on_state_changed(void *data, pw_stream_state old_state,
@@ -382,49 +368,16 @@ void on_process(void *data) {
     int stride = plane.chunk && plane.chunk->stride > 0
                      ? plane.chunk->stride / 4
                      : self->width;
-    auto found = self->source_buffers.find(plane.fd);
-    if (found == self->source_buffers.end()) {
-        gbm_import_fd_data info{};
-        info.fd = static_cast<int>(plane.fd);
-        info.width = self->width;
-        info.height = self->height;
-        info.stride = stride * 4;
-        info.format = DRM_FORMAT_XRGB8888;
-        gbm_bo *imported = gbm_bo_import(self->gbm, GBM_BO_IMPORT_FD,
-                                         &info, GBM_BO_USE_LINEAR);
-        if (!imported) {
-            std::fprintf(stderr, "rkwebscr-dmabuf: GBM import failed for fd %d\n",
-                         info.fd);
-            self->encoder->failed++;
-            pw_stream_queue_buffer(self->stream, buffer);
-            return;
-        }
-        uint32_t mapped_stride = 0;
-        void *map_data = nullptr;
-        auto *mapped = static_cast<uint8_t *>(gbm_bo_map(
-            imported, 0, 0, self->width, self->height,
-            GBM_BO_TRANSFER_READ, &mapped_stride, &map_data));
-        if (!mapped) {
-            std::fprintf(stderr, "rkwebscr-dmabuf: GBM map failed for fd %d\n",
-                         static_cast<int>(plane.fd));
-            gbm_bo_destroy(imported);
-            self->encoder->failed++;
-            pw_stream_queue_buffer(self->stream, buffer);
-            return;
-        }
-        found = self->source_buffers.emplace(
-            plane.fd, State::SourceBuffer{imported, mapped, mapped_stride,
-                                          map_data}).first;
+    if (plane.chunk && plane.chunk->offset != 0) {
+        std::fprintf(stderr,
+                     "rkwebscr-dmabuf: unsupported DMA-BUF offset: %u\n",
+                     plane.chunk->offset);
+        self->encoder->failed++;
+        pw_stream_queue_buffer(self->stream, buffer);
+        return;
     }
-
-    dma_buf_sync sync{DMA_BUF_SYNC_START | DMA_BUF_SYNC_READ};
-    ioctl(static_cast<int>(plane.fd), DMA_BUF_IOCTL_SYNC, &sync);
-    size_t offset = plane.chunk ? plane.chunk->offset : 0;
-    bool accepted = self->encoder->submit(found->second.mapped + offset,
-                                          found->second.stride,
+    bool accepted = self->encoder->submit(static_cast<int>(plane.fd), stride,
                                           static_cast<int64_t>(self->frames));
-    sync.flags = DMA_BUF_SYNC_END | DMA_BUF_SYNC_READ;
-    ioctl(static_cast<int>(plane.fd), DMA_BUF_IOCTL_SYNC, &sync);
     if (accepted)
         self->frames++;
     pw_stream_queue_buffer(self->stream, buffer);
@@ -486,21 +439,6 @@ int main(int argc, char **argv) {
     int output_fd = positive(argv[6], "output fd");
     if (std::signal(SIGUSR1, request_idr) == SIG_ERR) {
         std::fprintf(stderr, "rkwebscr-dmabuf: could not install IDR signal handler\n");
-        return 1;
-    }
-
-    const char *render_node = std::getenv("RKWEBSCR_RENDER_NODE");
-    if (!render_node)
-        render_node = "/dev/dri/renderD130";
-    state.drm_fd = open(render_node, O_RDWR | O_CLOEXEC);
-    if (state.drm_fd < 0) {
-        std::fprintf(stderr, "rkwebscr-dmabuf: could not open %s: %s\n",
-                     render_node, std::strerror(errno));
-        return 1;
-    }
-    state.gbm = gbm_create_device(state.drm_fd);
-    if (!state.gbm) {
-        std::fprintf(stderr, "rkwebscr-dmabuf: could not create GBM device\n");
         return 1;
     }
 

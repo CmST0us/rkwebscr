@@ -8,7 +8,11 @@ if command -v node >/dev/null 2>&1; then
 fi
 grep -q 'rkwebscr-dmabuf-encoder' server/rkwebscrd.py
 grep -q 'SPA_DATA_DmaBuf' native/rkwebscr-dmabuf-encoder.cpp
-grep -q 'ARGBToNV12' native/rkwebscr-dmabuf-encoder.cpp
+grep -q 'c_RkRgaBlit' native/rkwebscr-dmabuf-encoder.cpp
+if grep -q 'ARGBToNV12' native/rkwebscr-dmabuf-encoder.cpp; then
+  printf '%s\n' 'CPU color conversion found' >&2
+  exit 1
+fi
 grep -q 'encode_put_frame' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'superseded' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'MPP_ENC_SET_IDR_FRAME' native/rkwebscr-dmabuf-encoder.cpp
@@ -32,7 +36,7 @@ grep -q 'ei_device_keyboard_key' server/rkwebscrd.py
 grep -q 'max-buffers=3' server/rkwebscrd.py
 grep -q 'clocksync sync=true sync-to-first=true' server/rkwebscrd.py
 grep -q 'Gst.SECOND // 4' server/rkwebscrd.py
-grep -q 'RKWEBSCR_CAPTURE_FPS=66' systemd/rkwebscr.service
+grep -q 'RKWEBSCR_CAPTURE_FPS=63' systemd/rkwebscr.service
 grep -q 'RKWEBSCR_GPU_HZ=900000000' systemd-system/rkwebscr-performance.service
 grep -q 'RKWEBSCR_DMC_HZ=2112000000' systemd-system/rkwebscr-performance.service
 grep -q 'printf %%s' systemd-system/rkwebscr-performance.service
@@ -60,8 +64,8 @@ if grep -R -E -q 'ubuntu:GNOME|SESSION_MODE=ubuntu|mode=ubuntu|xdg-ubuntu' syste
   exit 1
 fi
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.4.3)' debian/changelog
-grep -q 'server_version = "rkwebscr/0.4.3"' server/rkwebscrd.py
+grep -q '^rkwebscr (0.4.4)' debian/changelog
+grep -q 'server_version = "rkwebscr/0.4.4"' server/rkwebscrd.py
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
@@ -73,6 +77,7 @@ if grep -R -E -q 'Authorization|token-file|load_token' server web scripts; then
   exit 1
 fi
 grep -q 'rockchip-mpp-dev' debian/control
+grep -q 'librga2 (>= 2.1.0-1flange1)' debian/control
 grep -q 'wl-clipboard' debian/control
 grep -q '^ gnome-session,$' debian/control
 grep -q '^ gnome-shell$' debian/control

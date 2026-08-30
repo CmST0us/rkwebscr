@@ -1,3 +1,10 @@
+rkwebscr (0.4.4) unstable; urgency=medium
+
+  * Convert PipeWire DMA-BUF frames to NV12 with Rockchip RGA.
+  * Calibrate the capture clock to 63 FPS for steady 60 FPS output.
+
+ -- Eric Wu <eric3u@outlook.com>  Sun, 30 Aug 2026 17:35:00 +0800
+
 rkwebscr (0.4.3) unstable; urgency=medium
 
   * Use the native GNOME session identity and Shell user mode.

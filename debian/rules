@@ -47,7 +47,7 @@ binary-arch: build-arch
 	gzip -9nc debian/changelog > $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
 	chmod 0644 $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
 	$(DEB_HOST_GNU_TYPE)-strip --strip-unneeded $(PACKAGE_DIR)/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder
-	dpkg-shlibdeps --ignore-missing-info -xrockchip-mpp -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder
+	dpkg-shlibdeps --ignore-missing-info -xrockchip-mpp -xlibrga2 -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder
 	dpkg-gencontrol -p$(PACKAGE) -P$(PACKAGE_DIR) -Tdebian/$(PACKAGE).substvars
 	cp debian/postinst $(PACKAGE_DIR)/DEBIAN/postinst
 	chmod 0755 $(PACKAGE_DIR)/DEBIAN/postinst
