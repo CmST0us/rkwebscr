@@ -115,6 +115,11 @@ sh -n scripts/rkwebscr-setup
 sh -n debian/postinst
 sh -n debian/prerm
 sh -n debian/postrm
+sh -n packaging/flange-build.sh
+sh -n tests/check-deb.sh
+version=$(sed -n '1s/^rkwebscr (\([^)]*\)).*/\1/p' debian/changelog)
+grep -Fxq "  version: $version" app.yaml
+grep -Fxq "    - file: rkwebscr_${version}_arm64.deb" app.yaml
 if python3 -c 'import gi; gi.require_version("Nice", "0.1")' >/dev/null 2>&1; then
   PYTHONPATH=. python3 - <<'PY'
 from server.rkwebscrd import usb_sdp_offer

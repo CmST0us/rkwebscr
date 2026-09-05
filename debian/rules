@@ -7,6 +7,7 @@ include /usr/share/dpkg/pkg-info.mk
 PACKAGE := rkwebscr
 PACKAGE_DIR := debian/$(PACKAGE)
 DEB_FILE := ../$(PACKAGE)_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
+SHLIBDEPS_LIBRARY_DIR ?= /usr/lib/$(DEB_HOST_MULTIARCH)
 
 .PHONY: clean build build-arch build-indep binary binary-arch binary-indep
 
@@ -46,8 +47,10 @@ binary-arch: build-arch
 	install -m 0644 README.md LICENSE $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/
 	gzip -9nc debian/changelog > $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
 	chmod 0644 $(PACKAGE_DIR)/usr/share/doc/$(PACKAGE)/changelog.Debian.gz
+ifeq (,$(filter nostrip,$(DEB_BUILD_OPTIONS)))
 	$(DEB_HOST_GNU_TYPE)-strip --strip-unneeded $(PACKAGE_DIR)/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder
-	dpkg-shlibdeps --ignore-missing-info -xrockchip-mpp -xlibrga2 -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder
+endif
+	dpkg-shlibdeps --ignore-missing-info -xrockchip-mpp -xlibrga2 -l"$(SHLIBDEPS_LIBRARY_DIR)" -Tdebian/$(PACKAGE).substvars $(PACKAGE_DIR)/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder
 	dpkg-gencontrol -p$(PACKAGE) -P$(PACKAGE_DIR) -Tdebian/$(PACKAGE).substvars
 	cp debian/postinst $(PACKAGE_DIR)/DEBIAN/postinst
 	chmod 0755 $(PACKAGE_DIR)/DEBIAN/postinst

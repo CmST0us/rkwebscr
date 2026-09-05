@@ -1,6 +1,7 @@
 rkwebscr (0.4.7) unstable; urgency=medium
 
   * Support optional ADB-forwarded ICE-TCP alongside normal LAN access.
+  * Add isolated Flange App builds using the MPP/RGA dependency installation tree.
 
  -- Eric Wu <eric3u@outlook.com>  Sun, 30 Aug 2026 23:10:00 +0800
 

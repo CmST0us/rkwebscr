@@ -1,0 +1,7 @@
+# 使用当前 flange 命令所属的工具仓库，目标状态和产物留在本项目。
+schema_version = 1
+build_dir = ".build"
+app_dirs = []
+
+[apps]
+rkwebscr = "."

@@ -3,6 +3,8 @@
 ## 0.4.7 - 2026-08-30
 
 - Restore optional ADB-forwarded ICE-TCP without changing normal LAN access.
+- Support `flange app build` with isolated ARM64 Debian builds and Flange's
+  MPP/RGA dependencies; preserve the existing package layout and user services.
 
 ## 0.4.6 - 2026-08-30
 

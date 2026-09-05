@@ -1,0 +1,29 @@
+app:
+  name: rkwebscr
+  version: 0.4.7
+  description: Rockchip GNOME Wayland 低延迟远程桌面
+  # 包内是 systemd 用户服务；不使用 Flange 默认的系统服务启动动作。
+  type: vendor
+  arch: [aarch64]
+
+maintainer:
+  name: Eric Wu
+  email: eric3u@outlook.com
+
+build:
+  system: custom
+  deps: [rkmm-mpp, rkmm-rga]
+  commands:
+    - [sh, packaging/flange-build.sh]
+  apt_packages:
+    - dpkg-dev
+    - pkg-config
+    - libpipewire-0.3-dev:{arch}
+    - libdrm-dev:{arch}
+
+# 复用 debian/rules 生成的完整包，Flange 只负责校验和发布。
+packaging:
+  format: deb
+  outputs:
+    - file: rkwebscr_0.4.7_arm64.deb
+      role: runtime

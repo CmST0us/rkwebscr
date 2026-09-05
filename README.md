@@ -42,11 +42,55 @@ systemd-system/  Avahi、80 端口代理和性能调优等系统服务
 avahi/           DNS-SD 服务声明
 udev/            Rockchip 媒体设备权限规则
 scripts/         安装后的初始化脚本
+packaging/       Flange 构建入口
 debian/          Debian 源码包元数据
 tests/           快速检查脚本
 ```
 
 ## 构建
+
+### 使用 Flange 构建
+
+本项目支持和 media-searchd 相同的 `flange app build` 工作流（命令名是
+`flange`）。在已准备好 Docker 构建镜像的 Flange 环境中，进入本仓库执行：
+
+```bash
+# 尚未把 flange 加入 PATH 时，先加载工具仓库环境，路径按实际位置替换。
+source /path/to/flange/envsetup.sh
+cd /path/to/rkwebscr
+
+flange target select radxa-rock5b-desktop-release
+flange app plan
+flange app build
+```
+
+`flange.toml` 将本仓库声明为独立工作区；目标状态写入 `.flange/`，构建缓存与
+产物写入 `.build/`。不需要把 rkwebscr 复制到 Flange 工具仓库，也不需要连接
+设备。首次使用 Flange 时，请先按其文档准备 Docker，并执行 `flange docker build`。
+
+构建会先准备 Flange 自带的 `rkmm-mpp` 和 `rkmm-rga`，通过依赖安装树提供
+MPP/RGA 头文件和库；PipeWire、DRM 开发包由 `build.apt_packages` 安装。
+项目在隔离源码副本中调用现有 `dpkg-buildpackage` 交叉编译 ARM64 编码器并
+生成完整 DEB，Flange 校验后发布，不做二次打包。需要支持 `packaging.outputs`
+和 `FLANGE_SYSROOT` 的 Flange 版本。
+
+rkwebscr 的最终产物位于：
+
+```text
+.build/target/<板卡>/<产品>/<变体>/apps/rkwebscr-<资源ID>/artifacts/rkwebscr_0.4.7_arm64.deb
+```
+
+实际路径以命令输出为准。资源 ID 由源码路径生成；依赖包也有各自的产物目录。
+重复执行 `flange app build` 会复用有效缓存，`--force` 会重建整个依赖闭包。
+`debug` 目标保留编码器调试符号并关闭优化，`release` 使用 Debian 默认优化并
+剥离符号；两种目标生成相同包名，产物目录相互独立。
+
+安装包继续使用下文的 Ubuntu 路径、运行依赖和维护脚本。MPP/RGA 动态库由
+Flange 系统包提供，不会内嵌进 rkwebscr。`app.yaml` 使用 `vendor` 类型交付
+完整 DEB，因为 rkwebscr 运行在桌面用户的 systemd 会话里；初始化仍需以
+`flange` 用户执行 `rkwebscr-setup`，不使用默认的系统服务 `app run/log` 动作。
+
+### 在目标设备上构建
 
 请在 RK3588 目标设备上安装构建依赖：
 

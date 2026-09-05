@@ -10,4 +10,5 @@ debian/rkwebscr.substvars
 *.deb
 *.dsc
 *.tar.*
-
+/.build/
+/.flange/
