@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.7 - 2026-08-30
+
+- Restore optional ADB-forwarded ICE-TCP without changing normal LAN access.
+
+## 0.4.6 - 2026-08-30
+
+- Buffer short Wi-Fi latency spikes for browser audio playback.
+- Use 20 ms Opus packets with stronger in-band loss recovery and stop dropping
+  queued desktop audio after only 40 ms.
+
 ## 0.4.5 - 2026-08-30
 
 - Wait for Mutter to finish writing each source DMA-BUF before RGA reads it,

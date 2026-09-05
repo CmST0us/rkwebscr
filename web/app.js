@@ -75,7 +75,7 @@ const downKeys = new Set();
 async function api(path, options = {}) {
   const response = await fetch(path, {
     ...options,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error || `${response.status} ${response.statusText}`);
@@ -126,7 +126,7 @@ async function connect() {
 
     peer.ontrack = ({ track, receiver }) => {
       stream.addTrack(track);
-      if (track.kind === "video" && "jitterBufferTarget" in receiver) {
+      if ("jitterBufferTarget" in receiver) {
         try { receiver.jitterBufferTarget = 100; } catch {}
       }
       elements.video.play().catch(() => {
@@ -138,9 +138,11 @@ async function connect() {
     peer.onconnectionstatechange = updateConnectionState;
 
     elements.connectMessage.textContent = "正在协商 WebRTC";
+    const adb = ["127.0.0.1", "localhost", "[::1]"].includes(location.hostname);
     const offer = await api("/api/offer", {
       method: "POST",
       body: "{}",
+      headers: adb ? { "X-Rkwebscr-Transport": "adb" } : {},
     });
     await peer.setRemoteDescription(offer);
     const microphoneTrack = microphoneStream?.getAudioTracks()[0];

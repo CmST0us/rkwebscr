@@ -24,13 +24,36 @@ import gi
 gi.require_version("Gst", "1.0")
 gi.require_version("GstSdp", "1.0")
 gi.require_version("GstWebRTC", "1.0")
-from gi.repository import Gio, GLib, Gst, GstSdp, GstWebRTC
+gi.require_version("Nice", "0.1")
+from gi.repository import Gio, GLib, Gst, GstSdp, GstWebRTC, Nice
 
 
 LOG = logging.getLogger("rkwebscr")
 MUTTER_REMOTE_DESKTOP = "org.gnome.Mutter.RemoteDesktop"
 MUTTER_SCREEN_CAST = "org.gnome.Mutter.ScreenCast"
 ICE_PORT = 8090
+
+
+def usb_sdp_offer(sdp: str) -> str:
+    lines = []
+    found = False
+    for line in sdp.splitlines():
+        if not line.startswith("a=candidate:"):
+            lines.append(line)
+            continue
+        fields = line.split()
+        if (
+            len(fields) >= 10
+            and fields[2].upper() == "TCP"
+            and fields[4] == "127.0.0.1"
+            and fields[-2:] == ["tcptype", "passive"]
+        ):
+            fields[4:6] = ["127.0.0.1", str(ICE_PORT)]
+            lines.append(" ".join(fields))
+            found = True
+    if not found:
+        raise RuntimeError("ADB ICE-TCP candidate is unavailable")
+    return "\r\n".join(lines) + "\r\n"
 
 
 def pipewire_default_node(alias: str) -> str | None:
@@ -494,9 +517,9 @@ class WebRTCSession:
             audio_branch = f"""
                 {audio_source} !
                   audio/x-raw,rate=48000,channels=2 !
-                  queue leaky=downstream max-size-buffers=4 max-size-bytes=0 max-size-time=40000000 !
+                  queue max-size-buffers=0 max-size-bytes=0 max-size-time=200000000 !
                   audioconvert ! audioresample !
-                  opusenc bitrate=128000 bitrate-type=cbr frame-size=10 inband-fec=true packet-loss-percentage=2 !
+                  opusenc bitrate=128000 bitrate-type=cbr frame-size=20 inband-fec=true packet-loss-percentage=10 !
                   valve name=audio_gate drop=true drop-mode=forward-sticky-events !
                   rtpopuspay pt=111 mtu=1200 !
                   application/x-rtp,media=audio,encoding-name=OPUS,payload=111,clock-rate=48000,encoding-params=(string)2 !
@@ -520,6 +543,12 @@ class WebRTCSession:
         self.ice = self.webrtc.get_property("ice-agent")
         self.ice.set_property("min-rtp-port", ICE_PORT)
         self.ice.set_property("max-rtp-port", ICE_PORT)
+        self.ice.set_property("ice-tcp", True)
+        self.nice_agent = self.ice.get_property("agent")
+        for ip in [*Nice.interfaces_get_local_ips(False), "127.0.0.1"]:
+            address = Nice.Address.new()
+            if not address.set_from_string(ip) or not self.nice_agent.add_local_address(address):
+                raise RuntimeError(f"Could not enable ICE address {ip}")
         self.video_gate = self.pipeline.get_by_name("video_gate")
         self.audio_gate = self.pipeline.get_by_name("audio_gate")
         output_names = ["video_out"] + (["audio_out"] if c.audio else [])
@@ -577,6 +606,7 @@ class WebRTCSession:
             self.pipeline.set_state(Gst.State.NULL)
         self.pipeline = None
         self.webrtc = None
+        self.nice_agent = None
         self.ice = None
         self.screen = None
         self.microphone = None
@@ -847,7 +877,7 @@ class NativeEncoder:
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    server_version = "rkwebscr/0.4.5"
+    server_version = "rkwebscr/0.4.7"
 
     @property
     def app(self) -> "Application":
@@ -863,7 +893,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             if path == "/api/offer":
-                offer = self.app.create_offer()
+                offer = self.app.create_offer(self.headers.get("X-Rkwebscr-Transport") == "adb")
                 return self._json(HTTPStatus.OK, {"type": "offer", "sdp": offer})
             if path == "/api/answer":
                 body = self._read_json()
@@ -1061,13 +1091,14 @@ class Application:
             "transport": "WebRTC",
         }
 
-    def create_offer(self) -> str:
+    def create_offer(self, adb: bool = False) -> str:
         if not self.webrtc:
             raise RuntimeError("Screen capture is still starting")
         if self.webrtc._offer_sdp is not None:
             self.webrtc.close()
             self.webrtc = WebRTCSession(self, self._node_id)
-        return self.webrtc.create_offer()
+        offer = self.webrtc.create_offer()
+        return usb_sdp_offer(offer) if adb else offer
 
     def set_answer(self, answer: str) -> None:
         if not self.webrtc:

@@ -69,7 +69,7 @@ make deb
 ```
 
 `dpkg-buildpackage` 会按照 Debian 的常规目录结构，把
-`rkwebscr_0.4.5_<架构>.deb` 写入项目的上一级目录。
+`rkwebscr_0.4.7_<架构>.deb` 写入项目的上一级目录。
 
 ## 安装路径
 
@@ -94,7 +94,7 @@ DEB 安装包遵循 Ubuntu 的标准文件系统布局：
 以下示例假定桌面用户为 `flange`。先安装 DEB，并允许 `flange` 访问视频设备：
 
 ```bash
-sudo apt install ../rkwebscr_0.4.5_arm64.deb
+sudo apt install ../rkwebscr_0.4.7_arm64.deb
 sudo usermod -aG video flange
 ```
 
@@ -150,6 +150,17 @@ http://rkwebscr.local/
 到 TCP 8090。设备启用防火墙时，需要允许可信局域网访问这些端口。WebRTC
 媒体经过 DTLS-SRTP 加密，但 HTTP 控制接口没有鉴权，因此不要把服务直接
 暴露到公网。
+
+需要通过 ADB USB 访问时，同时转发网页和固定的 ICE-TCP 媒体端口：
+
+```bash
+adb forward tcp:18080 tcp:80
+adb forward tcp:8090 tcp:8090
+```
+
+然后打开 `http://127.0.0.1:18080/`。localhost 页面会自动选择 ADB
+ICE-TCP；`rkwebscr.local` 和设备 IP 仍正常使用局域网 UDP，两种访问方式可以
+同时保留。ADB 断开不会影响局域网服务。
 
 工具栏中的剪贴板按钮可以双向传递文本。在普通 HTTP 局域网页面中，如果浏览器
 禁止调用 Clipboard API，请改用弹窗内的文本框。

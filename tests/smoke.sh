@@ -19,11 +19,12 @@ grep -q 'superseded' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'MPP_ENC_SET_IDR_FRAME' native/rkwebscr-dmabuf-encoder.cpp
 grep -q 'send_signal(signal.SIGUSR1)' server/rkwebscrd.py
 grep -q 'ICE_PORT = 8090' server/rkwebscrd.py
-if grep -R -E -q 'USB_ICE|X-Rkwebscr-Transport|adb forward|18080' server web scripts README.md; then
-  printf '%s\n' 'USB transport code found' >&2
-  exit 1
-fi
+grep -q 'X-Rkwebscr-Transport' web/app.js
+grep -q 'Nice.interfaces_get_local_ips(False)' server/rkwebscrd.py
+grep -q 'add_local_address(address)' server/rkwebscrd.py
 grep -q 'opusenc' server/rkwebscrd.py
+grep -q 'frame-size=20 inband-fec=true packet-loss-percentage=10' server/rkwebscrd.py
+grep -q 'max-size-time=200000000' server/rkwebscrd.py
 grep -q 'rtpopusdepay' server/rkwebscrd.py
 grep -q 'rkwebscr_microphone' server/rkwebscrd.py
 grep -q 'rkwebscr_output' server/rkwebscrd.py
@@ -65,8 +66,8 @@ if grep -R -E -q 'ubuntu:GNOME|SESSION_MODE=ubuntu|mode=ubuntu|xdg-ubuntu' syste
   exit 1
 fi
 grep -q '^Package: rkwebscr' debian/control
-grep -q '^rkwebscr (0.4.5)' debian/changelog
-grep -q 'server_version = "rkwebscr/0.4.5"' server/rkwebscrd.py
+grep -q '^rkwebscr (0.4.7)' debian/changelog
+grep -q 'server_version = "rkwebscr/0.4.7"' server/rkwebscrd.py
 grep -q 'dpkg-deb --build' debian/rules
 grep -q '/usr/lib/rkwebscr/rkwebscr-dmabuf-encoder' debian/rules
 if grep -R -q '/usr/libexec/rkwebscr' server debian systemd; then
@@ -100,6 +101,7 @@ grep -q 'clipboardDialog' web/index.html
 grep -q 'getUserMedia' web/app.js
 grep -q 'microphoneButton' web/index.html
 grep -q 'jitterBufferTarget = 100' web/app.js
+grep -q 'if ("jitterBufferTarget" in receiver)' web/app.js
 grep -q '1000 / (status?.video.fps || 60)' web/app.js
 grep -q 'moveTimer = setInterval' web/app.js
 if grep -R -E -q 'FrameSmoother|remoteCanvas|createImageBitmap\(video\)|is-smoothed' web; then
@@ -113,4 +115,14 @@ sh -n scripts/rkwebscr-setup
 sh -n debian/postinst
 sh -n debian/prerm
 sh -n debian/postrm
+if python3 -c 'import gi; gi.require_version("Nice", "0.1")' >/dev/null 2>&1; then
+  PYTHONPATH=. python3 - <<'PY'
+from server.rkwebscrd import usb_sdp_offer
+
+sdp = "v=0\r\na=candidate:1 1 UDP 1 192.168.1.2 8090 typ host\r\na=candidate:2 1 TCP 1 127.0.0.1 8090 typ host tcptype passive\r\n"
+offer = usb_sdp_offer(sdp)
+assert " UDP " not in offer
+assert " TCP 1 127.0.0.1 8090 typ host tcptype passive" in offer
+PY
+fi
 printf '%s\n' 'smoke checks passed'

@@ -1,3 +1,15 @@
+rkwebscr (0.4.7) unstable; urgency=medium
+
+  * Support optional ADB-forwarded ICE-TCP alongside normal LAN access.
+
+ -- Eric Wu <eric3u@outlook.com>  Sun, 30 Aug 2026 23:10:00 +0800
+
+rkwebscr (0.4.6) unstable; urgency=medium
+
+  * Improve desktop audio resilience to Wi-Fi latency spikes.
+
+ -- Eric Wu <eric3u@outlook.com>  Sun, 30 Aug 2026 18:35:00 +0800
+
 rkwebscr (0.4.5) unstable; urgency=medium
 
   * Synchronize source DMA-BUF access before RGA conversion.
